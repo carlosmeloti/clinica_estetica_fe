@@ -1,0 +1,137 @@
+.sidenav-container {
+  min-height: 100vh;
+}
+
+.sidenav {
+  width: 250px;
+  background-color: #FBF9F6;
+  color: #5C4037;
+  border-right: 1px solid #C5A89E;
+  min-height: 100vh;
+
+  ::ng-deep .mat-drawer-inner-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .sidebar-content {
+    flex: 1;
+  }
+
+  .sidebar-footer {
+    padding: 24px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: auto;
+    padding-bottom: 24px;
+  }
+
+  .sidebar-logo {
+    max-width: 85%;
+    width: 160px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+  }
+
+  .sidenav-toolbar {
+    background-color: #A97C6E;
+    color: white;
+  }
+
+  mat-nav-list {
+    a {
+      color: #5C4037;
+      padding-left: 16px !important;
+
+      &:hover {
+        background: rgba(169, 124, 110, 0.1);
+      }
+    }
+  }
+}
+
+.mat-toolbar.mat-primary {
+  background-color: #A97C6E !important;
+  color: white !important;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 20px;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    font-weight: bold;
+    color: #A97C6E;
+
+    mat-icon {
+      color: #A97C6E;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  .user-info {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+
+    .user-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: white;
+    }
+
+    .user-profile-label {
+      font-size: 11px;
+      opacity: 0.9;
+      color: white;
+    }
+  }
+
+  .dropdown-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: white;
+  }
+}
+
+.content-container {
+  padding: 20px;
+  min-height: calc(100vh - 64px);
+  background-color: #FBF9F6;
+}
+
+.active-link {
+  background: rgba(169, 124, 110, 0.2) !important;
+  color: #A97C6E !important;
+  font-weight: bold;
+}

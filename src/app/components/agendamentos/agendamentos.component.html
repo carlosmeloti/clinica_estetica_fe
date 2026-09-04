@@ -1,0 +1,12 @@
+<div class="header-container">
+  <h2>Gestão de Agendamentos</h2>
+  <button mat-raised-button class="btn-agendar" (click)="novoAgendamento()">
+    Novo Agendamento
+  </button>
+</div>
+
+<mat-card class="calendar-main-card">
+  <mat-card-content>
+    <full-calendar [options]="calendarOptions()"></full-calendar>
+  </mat-card-content>
+</mat-card>

@@ -1,0 +1,53 @@
+<div class="header-container">
+  <h2>Configurações do Sistema</h2>
+</div>
+
+<mat-tab-group>
+  <mat-tab label="Procedimentos">
+    <mat-card>
+      <mat-card-header>
+        <button mat-button color="primary" (click)="novoProcedimento()">
+          <mat-icon>add</mat-icon> Adicionar Procedimento
+        </button>
+      </mat-card-header>
+      <mat-card-content>
+        <table mat-table [dataSource]="procedimentos" class="full-width-table">
+          <ng-container matColumnDef="nome">
+            <th mat-header-cell *matHeaderCellDef>Nome</th>
+            <td mat-cell *matCellDef="let row">{{row.nome}}</td>
+          </ng-container>
+          <ng-container matColumnDef="preco">
+            <th mat-header-cell *matHeaderCellDef>Preço</th>
+            <td mat-cell *matCellDef="let row">{{row.precoSugerido | currency:'BRL'}}</td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="['nome', 'preco']"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['nome', 'preco'];"></tr>
+        </table>
+      </mat-card-content>
+    </mat-card>
+  </mat-tab>
+
+  <mat-tab label="Insumos">
+    <mat-card>
+      <mat-card-header>
+        <button mat-button color="primary" (click)="novoInsumo()">
+          <mat-icon>add</mat-icon> Adicionar Insumo
+        </button>
+      </mat-card-header>
+      <mat-card-content>
+        <table mat-table [dataSource]="insumos" class="full-width-table">
+          <ng-container matColumnDef="nome">
+            <th mat-header-cell *matHeaderCellDef>Nome</th>
+            <td mat-cell *matCellDef="let row">{{row.nome}}</td>
+          </ng-container>
+          <ng-container matColumnDef="estoque">
+            <th mat-header-cell *matHeaderCellDef>Estoque</th>
+            <td mat-cell *matCellDef="let row">{{row.quantidadeEstoque}} {{row.unidadeMedida}}</td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="['nome', 'estoque']"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['nome', 'estoque'];"></tr>
+        </table>
+      </mat-card-content>
+    </mat-card>
+  </mat-tab>
+</mat-tab-group>

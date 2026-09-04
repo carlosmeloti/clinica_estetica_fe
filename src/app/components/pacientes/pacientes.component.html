@@ -1,0 +1,203 @@
+<div class="premium-pacientes-layout">
+  <!-- Cabeçalho com Título e Ações -->
+  <header class="premium-header">
+    <h1 class="premium-title">Cadastro de paciente</h1>
+    <div class="premium-actions">
+      <button mat-button class="btn-novo-pilula" (click)="novoPaciente()">
+        <mat-icon>add</mat-icon> Novo
+      </button>
+      <button mat-flat-button class="btn-salvar-pilula" [disabled]="pacienteForm.invalid" (click)="salvar()">
+        Salvar paciente
+      </button>
+    </div>
+  </header>
+
+  <div class="premium-grid-container">
+    <!-- Coluna Esquerda: Resumo do Paciente -->
+    <aside class="premium-sidebar">
+      <div class="resumo-card">
+        <div class="avatar-container">
+          <div class="avatar-large">
+            <span *ngIf="!pacienteForm.get('nome')?.value">?</span>
+            <span *ngIf="pacienteForm.get('nome')?.value">{{ pacienteForm.get('nome')?.value.charAt(0).toUpperCase() }}</span>
+          </div>
+        </div>
+
+        <div class="resumo-info">
+          <h2 class="paciente-nome-display">{{ pacienteForm.get('nome')?.value || 'Novo paciente' }}</h2>
+          <span class="ficha-label">Nova ficha</span>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-circle">0</div>
+            <span class="stat-label">Sessões</span>
+          </div>
+          <div class="stat-item">
+            <div class="stat-circle">0</div>
+            <span class="stat-label">Pagos</span>
+          </div>
+          <div class="stat-item">
+            <div class="stat-circle">-</div>
+            <span class="stat-label">Última</span>
+          </div>
+        </div>
+
+        <div class="progress-section">
+          <div class="progress-info">
+            <span>Progresso do Tratamento</span>
+            <span>0%</span>
+          </div>
+          <div class="premium-progress-bar">
+            <div class="progress-fill" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Listagem rápida ou busca pode entrar aqui ou abaixo do card -->
+      <div class="pacientes-list-card">
+         <div class="list-header">
+           <h3>Lista de Pacientes</h3>
+         </div>
+         <div class="mini-search">
+            <input type="text" [(ngModel)]="termoPesquisa" placeholder="Buscar..." (keyup.enter)="pesquisar()">
+            <mat-icon (click)="pesquisar()">search</mat-icon>
+         </div>
+         <div class="scrollable-list">
+           <div class="mini-paciente-item"
+                *ngFor="let p of pacientes"
+                [class.active]="pacienteSelecionado?.id === p.id"
+                (click)="selecionarPaciente(p)">
+             <div class="mini-avatar">{{ p.nome.charAt(0).toUpperCase() }}</div>
+             <div class="mini-info">
+               <span class="mini-nome">{{ p.nome }}</span>
+               <span class="mini-sub">{{ p.telefone || 'Sem telefone' }}</span>
+             </div>
+           </div>
+         </div>
+         <mat-paginator [length]="totalElements"
+                        [pageSize]="pageSize"
+                        [pageSizeOptions]="[5, 10]"
+                        (page)="onPageChange($event)"
+                        class="compact-paginator">
+         </mat-paginator>
+      </div>
+    </aside>
+
+    <!-- Coluna Direita: Formulários -->
+    <main class="premium-content">
+      <form [formGroup]="pacienteForm">
+        <!-- Card: Informações Pessoais -->
+        <section class="premium-card">
+          <div class="card-header">
+            <mat-icon>person_outline</mat-icon>
+            <h3>Informações Pessoais</h3>
+          </div>
+          <div class="card-body">
+            <div class="premium-form-grid">
+              <div class="form-group col-4">
+                <label>Nome Completo</label>
+                <input type="text" formControlName="nome" placeholder="Digite o nome completo" class="premium-input">
+              </div>
+              <div class="form-group col-2">
+                <label>CPF</label>
+                <input type="text" formControlName="cpf" placeholder="000.000.000-00" class="premium-input">
+              </div>
+              <div class="form-group col-2">
+                <label>Data de Nascimento</label>
+                <input type="date" formControlName="dataNascimento" class="premium-input">
+              </div>
+              <div class="form-group col-2">
+                <label>Tipo Sanguíneo</label>
+                <input type="text" formControlName="tipoSanguineo" placeholder="Ex: O+" class="premium-input">
+              </div>
+              <div class="form-group col-2">
+                <label>Responsável</label>
+                <input type="text" formControlName="nomeResponsavel" placeholder="Nome do responsável" class="premium-input">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Card: Contato -->
+        <section class="premium-card">
+          <div class="card-header">
+            <mat-icon>mail_outline</mat-icon>
+            <h3>Contato</h3>
+          </div>
+          <div class="card-body">
+            <div class="premium-form-grid">
+              <div class="form-group col-2">
+                <label>Email</label>
+                <input type="email" formControlName="email" placeholder="email@exemplo.com" class="premium-input">
+              </div>
+              <div class="form-group col-2">
+                <label>Telefone</label>
+                <input type="text" formControlName="telefone" placeholder="(00) 00000-0000" class="premium-input">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Card: Endereço -->
+        <section class="premium-card" formGroupName="endereco">
+          <div class="card-header">
+            <mat-icon>location_on</mat-icon>
+            <h3>Endereço</h3>
+          </div>
+          <div class="card-body">
+            <div class="premium-form-grid">
+              <div class="form-group col-1">
+                <label>CEP</label>
+                <input type="text" formControlName="cep" placeholder="00000-000" class="premium-input">
+              </div>
+              <div class="form-group col-3">
+                <label>Logradouro</label>
+                <input type="text" formControlName="logradouro" placeholder="Rua, Avenida..." class="premium-input">
+              </div>
+              <div class="form-group col-1">
+                <label>Número</label>
+                <input type="text" formControlName="numero" placeholder="Nº" class="premium-input">
+              </div>
+              <div class="form-group col-1">
+                <label>Bairro</label>
+                <input type="text" formControlName="bairro" placeholder="Bairro" class="premium-input">
+              </div>
+              <div class="form-group col-1">
+                <label>Cidade</label>
+                <input type="text" formControlName="cidade" placeholder="Cidade" class="premium-input">
+              </div>
+              <div class="form-group col-1">
+                <label>Estado</label>
+                <input type="text" formControlName="estado" placeholder="UF" class="premium-input">
+              </div>
+              <div class="form-group col-4">
+                <label>Complemento</label>
+                <input type="text" formControlName="complemento" placeholder="Apt, Bloco..." class="premium-input">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Card: Anamnese / Notas -->
+        <section class="premium-card">
+          <div class="card-header">
+            <mat-icon>assignment</mat-icon>
+            <h3>Anamnese e Notas</h3>
+          </div>
+          <div class="card-body">
+            <div class="form-group col-4">
+              <label>Observações Gerais</label>
+              <textarea formControlName="observacoesGerais" rows="5" placeholder="Descreva observações clínicas relevantes..." class="premium-input textarea"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- Ação de Excluir sutil -->
+        <div class="delete-action" *ngIf="pacienteSelecionado">
+          <button (click)="deletarPaciente()" class="btn-text-delete">Excluir ficha do paciente</button>
+        </div>
+      </form>
+    </main>
+  </div>
+</div>

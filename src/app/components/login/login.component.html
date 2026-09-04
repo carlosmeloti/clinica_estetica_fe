@@ -1,0 +1,49 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <img src="../../../assets/logo.png" alt="Logo" class="logo" #logo (error)="logo.style.display='none'">
+      <h1>Clínica Estética</h1>
+      <p>Acesse sua conta para continuar</p>
+    </div>
+
+    <form (submit)="onSubmit($event)" class="login-form">
+      <div class="form-group">
+        <label for="username">Usuário</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          [(ngModel)]="loginData.login"
+          required
+          placeholder="Digite seu usuário"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="password">Senha</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          [(ngModel)]="loginData.password"
+          required
+          placeholder="Digite sua senha"
+        >
+      </div>
+
+      @if (infoMessage) {
+        <div class="info-message">
+          {{ infoMessage }}
+        </div>
+      }
+
+      <button type="submit" [disabled]="loading" class="login-button">
+        @if (loading) {
+          <span>Carregando...</span>
+        } @else {
+          <span>Entrar</span>
+        }
+      </button>
+    </form>
+  </div>
+</div>

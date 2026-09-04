@@ -1,0 +1,78 @@
+/* You can add global styles to this file, and also import other style files */
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background-color: #FBF9F6;
+  color: #5C4037;
+}
+
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 10px 0;
+
+  h2 {
+    margin: 0;
+    color: #A97C6E;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+}
+
+.content-container {
+  padding: 24px;
+}
+
+.mat-mdc-card {
+  margin-bottom: 24px;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
+  overflow: hidden;
+}
+
+.full-width-table {
+  width: 100%;
+}
+
+/* Custom Snackbars - Estética/SPA */
+.error-snackbar {
+  --mdc-snackbar-container-color: #f8d7da; /* Vermelho pastel bem discreto */
+  --mdc-snackbar-supporting-text-color: #5C4037; /* Cor da marca */
+  --mdc-snackbar-container-shape: 12px;
+
+  .mat-mdc-button {
+    --mdc-text-button-label-text-color: #5C4037;
+  }
+
+  /* Fallback e ajustes finos */
+  .mdc-snackbar__surface {
+    background-color: #f8d7da !important;
+    border-radius: 12px !important;
+  }
+  .mdc-snackbar__label {
+    color: #5C4037 !important;
+    font-weight: 500;
+  }
+}
+
+.success-snackbar {
+  --mdc-snackbar-container-color: #E2ECE9; /* Um tom menta/verde suave que harmoniza com o rosé */
+  --mdc-snackbar-supporting-text-color: #5C4037;
+  --mdc-snackbar-container-shape: 12px;
+
+  .mat-mdc-button {
+    --mdc-text-button-label-text-color: #5C4037;
+  }
+
+  .mdc-snackbar__surface {
+    background-color: #E2ECE9 !important;
+    border-radius: 12px !important;
+  }
+  .mdc-snackbar__label {
+    color: #5C4037 !important;
+    font-weight: 500;
+  }
+}

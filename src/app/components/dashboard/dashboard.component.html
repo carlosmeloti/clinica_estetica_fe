@@ -1,0 +1,43 @@
+<div class="dashboard-container">
+  <h2>Dashboard</h2>
+
+  <mat-grid-list cols="4" rowHeight="150px" gutterSize="20px">
+    @for (stat of stats; track stat.label) {
+      <mat-grid-tile>
+        <mat-card class="stat-card" [style.border-left-color]="stat.color" [routerLink]="stat.link">
+          <mat-card-content>
+            <div class="stat-icon" [style.color]="stat.color">
+              <mat-icon>{{stat.icon}}</mat-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{stat.value}}</div>
+              <div class="stat-label">{{stat.label}}</div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </mat-grid-tile>
+    }
+  </mat-grid-list>
+
+  <h3>Ações Rápidas</h3>
+  <div class="quick-actions">
+    @for (acao of acoesRapidas; track acao.label) {
+      <button mat-stroked-button class="btn-quick-action" [routerLink]="acao.link">
+        <span>{{acao.label}}</span>
+      </button>
+    }
+  </div>
+
+  <div class="charts-row">
+    <mat-card class="chart-placeholder">
+      <mat-card-header>
+        <mat-card-title>Agendamentos por Status</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="placeholder-content">
+          Gráfico em desenvolvimento...
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

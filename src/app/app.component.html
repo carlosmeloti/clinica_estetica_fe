@@ -1,0 +1,65 @@
+@if (authService.isAuthenticated()) {
+  <mat-sidenav-container class="sidenav-container">
+    <mat-sidenav #drawer class="sidenav" fixedInViewport
+        [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'"
+        [mode]="(isHandset$ | async) ? 'over' : 'side'"
+        [opened]="(isHandset$ | async) === false">
+      <div class="sidebar-content">
+        <mat-toolbar class="sidenav-toolbar">Menu</mat-toolbar>
+        <mat-nav-list>
+          @for (item of menuItems; track item.path) {
+            <a mat-list-item [routerLink]="item.path" routerLinkActive="active-link">
+              <span matListItemTitle>{{item.label}}</span>
+            </a>
+          }
+        </mat-nav-list>
+      </div>
+      <div class="sidebar-footer">
+        <img src="assets/logo.png" alt="Lene Costa Logo" class="sidebar-logo">
+      </div>
+    </mat-sidenav>
+    <mat-sidenav-content>
+      <mat-toolbar color="primary" class="main-toolbar">
+        @if (isHandset$ | async) {
+          <button
+            type="button"
+            aria-label="Toggle sidenav"
+            mat-icon-button
+            (click)="drawer.toggle()">
+            <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
+          </button>
+        }
+        <span>{{title}}</span>
+        <span class="spacer"></span>
+        <div class="user-profile" [matMenuTriggerFor]="userMenu">
+          <div class="avatar">
+            <span>{{ userInitials() }}</span>
+          </div>
+          <div class="user-info">
+            <span class="user-name">{{ userName() }}</span>
+            <span class="user-profile-label">{{ userProfileLabel() }}</span>
+          </div>
+          <mat-icon class="dropdown-icon">expand_more</mat-icon>
+        </div>
+        <mat-menu #userMenu="matMenu" class="profile-menu">
+          <button mat-menu-item>
+            <span>Minha Conta</span>
+          </button>
+          <button mat-menu-item>
+            <span>Configurações</span>
+          </button>
+          <mat-divider></mat-divider>
+          <button mat-menu-item (click)="logout()">
+            <span>Sair</span>
+          </button>
+        </mat-menu>
+      </mat-toolbar>
+
+      <main class="content-container">
+        <router-outlet></router-outlet>
+      </main>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+} @else {
+  <router-outlet></router-outlet>
+}

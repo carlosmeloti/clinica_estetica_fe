@@ -1,0 +1,106 @@
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+
+  h2 {
+    color: #5C4037;
+    font-weight: 700;
+    margin: 0;
+  }
+}
+
+.btn-agendar {
+  background-color: #A97C6E !important;
+  color: white !important;
+  padding: 0 24px !important;
+  height: 45px !important;
+  border-radius: 8px !important;
+}
+
+.calendar-main-card {
+  background-color: #FBF9F6;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  padding: 10px;
+}
+
+/* Estilização Lene Costa para FullCalendar */
+:host ::ng-deep {
+  .fc {
+    font-family: 'Roboto', sans-serif;
+    --fc-border-color: #C5A89E;
+    --fc-today-bg-color: rgba(169, 124, 110, 0.05);
+    --fc-button-bg-color: #A97C6E;
+    --fc-button-border-color: #A97C6E;
+    --fc-button-hover-bg-color: #5C4037;
+    --fc-button-hover-border-color: #5C4037;
+    --fc-button-active-bg-color: #5C4037;
+    --fc-button-active-border-color: #5C4037;
+    --fc-event-bg-color: #A97C6E;
+    --fc-event-border-color: #A97C6E;
+  }
+
+  /* Linhas de hora */
+  .fc-timegrid-slot {
+    height: 3em !important;
+    border-bottom: 1px solid #C5A89E !important;
+  }
+
+  /* Textos das horas */
+  .fc-timegrid-slot-label-cushion {
+    color: #5C4037 !important;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+  }
+
+  /* Cabeçalho da tabela */
+  .fc-col-header-cell {
+    background-color: #FBF9F6;
+    padding: 12px 0;
+
+    .fc-col-header-cell-cushion {
+      color: #5C4037;
+      font-weight: 700;
+      text-decoration: none;
+    }
+  }
+
+  /* Blocos/Cards de agendamentos */
+  .fc-v-event {
+    border-radius: 6px !important;
+    padding: 4px 8px !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    background-color: #A97C6E !important;
+    border: none !important;
+
+    .fc-event-main {
+      color: #FFFFFF !important;
+    }
+
+    .fc-event-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .fc-event-time {
+      font-size: 0.8rem;
+      opacity: 0.9;
+    }
+  }
+
+  /* Estilo para eventos ao passar o mouse */
+  .fc-event:hover {
+    filter: brightness(90%);
+    cursor: pointer;
+  }
+
+  /* Botões do Toolbar */
+  .fc-button-primary {
+    &:focus {
+      box-shadow: 0 0 0 2px rgba(169, 124, 110, 0.5) !important;
+    }
+  }
+}
