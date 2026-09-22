@@ -38,9 +38,7 @@ import interactionPlugin, { EventResizeDoneArg } from '@fullcalendar/interaction
     MatNativeDateModule,
     MatListModule,
     MatDividerModule,
-    FullCalendarModule,
-    AgendamentoDialogComponent,
-    AgendamentoDetalhesDialogComponent
+    FullCalendarModule
   ],
   templateUrl: './agendamentos.component.html',
   styleUrl: './agendamentos.component.scss'
@@ -89,15 +87,22 @@ export class AgendamentosComponent implements OnInit {
       procedimentos: this.apiService.listarProcedimentos()
     }).subscribe({
       next: (res) => {
-        this.agendamentos.set(res.agendamentos);
-        this.pacientes.set(res.pacientes.content);
-        this.procedimentos.set(res.procedimentos);
+        // Tratamento robusto para diferentes formatos de resposta
+        const listaAgendamentos = Array.isArray(res.agendamentos) ? res.agendamentos : (res.agendamentos as any)?.content || [];
+        this.agendamentos.set(listaAgendamentos);
+
+        const listaPacientes = (res.pacientes as any)?.content || (Array.isArray(res.pacientes) ? res.pacientes : []);
+        this.pacientes.set(listaPacientes);
+
+        const listaProcedimentos = Array.isArray(res.procedimentos) ? res.procedimentos : (res.procedimentos as any)?.content || [];
+        this.procedimentos.set(listaProcedimentos);
+
         this.atualizarEventosCalendario();
         this.loading.set(false);
       },
-      error: () => {
+      error: (err) => {
         this.loading.set(false);
-        this.notificationService.showError('Erro ao carregar dados da agenda.');
+        console.error('Erro ao carregar dados da agenda', err);
       }
     });
   }
@@ -201,19 +206,20 @@ export class AgendamentosComponent implements OnInit {
 
   novoAgendamento(data?: Date): void {
     const dialogRef = this.dialog.open(AgendamentoDialogComponent, {
-      width: '500px',
+      width: '600px',
+      maxWidth: '95vw',
       data: { data: data || this.selectedDate() }
     });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.apiService.criarAgendamento(result).subscribe({
-          next: () => this.carregarDados(),
+          next: () => {
+            this.carregarDados();
+            this.notificationService.showSuccess('Agendamento criado com sucesso!');
+          },
           error: (err) => {
-            if (err.status === 409) {
-              // A notificação já foi mostrada pelo interceptor,
-              // mas podemos adicionar lógica específica aqui se necessário.
-            }
+            console.error('Erro ao criar agendamento', err);
           }
         });
       }
@@ -222,16 +228,21 @@ export class AgendamentosComponent implements OnInit {
 
   editarAgendamento(agendamento: Agendamento): void {
     const dialogRef = this.dialog.open(AgendamentoDialogComponent, {
-      width: '500px',
+      width: '600px',
+      maxWidth: '95vw',
       data: { agendamento, data: new Date(agendamento.dataHoraInicio) }
     });
 
-    // Nota: AgendamentoDialogComponent pode precisar de ajustes para edição,
-    // mas o foco agora é a integração do FullCalendar.
     dialogRef.afterClosed().subscribe(result => {
       if (result && agendamento.id) {
-        this.apiService.atualizarAgendamento(agendamento.id, result).subscribe(() => {
-          this.carregarDados();
+        this.apiService.atualizarAgendamento(agendamento.id, result).subscribe({
+          next: () => {
+            this.carregarDados();
+            this.notificationService.showSuccess('Agendamento atualizado com sucesso!');
+          },
+          error: (err) => {
+            console.error('Erro ao atualizar agendamento', err);
+          }
         });
       }
     });

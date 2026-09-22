@@ -6,6 +6,8 @@ import { ConfiguracoesComponent } from './components/configuracoes/configuracoes
 import { LoginComponent } from './components/login/login.component';
 import { authGuard } from './guards/auth.guard';
 
+import { AtendimentoComponent } from './components/atendimentos/atendimento.component';
+
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -22,6 +24,11 @@ export const routes: Routes = [
   {
     path: 'agendamentos',
     component: AgendamentosComponent,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'agendamentos/:id/atendimento',
+    component: AtendimentoComponent,
     canActivate: [authGuard]
   },
   {

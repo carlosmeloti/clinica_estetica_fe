@@ -1,0 +1,140 @@
+.atendimento-container {
+  padding: 20px;
+  background-color: #f5f7fa;
+  min-height: 100vh;
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+
+    .title-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      h1 {
+        margin: 0;
+        font-size: 24px;
+        color: #2c3e50;
+      }
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+    }
+  }
+
+  .content-grid {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 24px;
+
+    @media (max-width: 960px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+
+    .info-card {
+      mat-card-header {
+        margin-bottom: 12px;
+        mat-card-title {
+          font-size: 18px;
+          color: #3f51b5;
+        }
+      }
+    }
+
+    .paciente-resumo {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+
+      .avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: #3f51b5;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        font-weight: bold;
+      }
+
+      .details {
+        display: flex;
+        flex-direction: column;
+
+        strong {
+          font-size: 16px;
+          margin-bottom: 4px;
+        }
+
+        span {
+          font-size: 14px;
+          color: #666;
+        }
+      }
+    }
+
+    .agendamento-info {
+      .info-item {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 12px;
+
+        label {
+          font-size: 12px;
+          font-weight: bold;
+          color: #888;
+          text-transform: uppercase;
+        }
+
+        span {
+          font-size: 15px;
+        }
+      }
+    }
+  }
+
+  .main-content {
+    .form-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding-top: 16px;
+
+      .full-width {
+        width: 100%;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+
+        @media (max-width: 600px) {
+          grid-template-columns: 1fr;
+        }
+      }
+    }
+  }
+
+  .loading-full {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 400px;
+    gap: 16px;
+  }
+}

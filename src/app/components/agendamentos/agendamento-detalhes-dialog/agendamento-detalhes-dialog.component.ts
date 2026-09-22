@@ -7,10 +7,11 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../../services/api.service';
-import { Agendamento, Procedimento, Paciente } from '../../../models/api.models';
+import { Agendamento, Procedimento, Paciente, EvolucaoEstetica } from '../../../models/api.models';
 import { AgendamentoDialogComponent } from '../agendamento-dialog/agendamento-dialog.component';
 import { NotificationService } from '../../../services/notification.service';
-import { forkJoin } from 'rxjs';
+import { forkJoin, catchError, of } from 'rxjs';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-agendamento-detalhes-dialog',
@@ -61,12 +62,19 @@ import { forkJoin } from 'rxjs';
         <button mat-stroked-button color="primary" *ngIf="podeConfirmar()" (click)="confirmar()">
           Confirmar
         </button>
-        <button mat-stroked-button color="accent" *ngIf="podeIniciar()" (click)="iniciar()">
-          Iniciar Atendimento
+
+        <button mat-flat-button color="accent" *ngIf="podeRegistrarAtendimento()" (click)="irParaAtendimento()">
+          Registrar Atendimento
         </button>
-        <button mat-stroked-button class="btn-concluir" *ngIf="podeConcluir()" (click)="concluir()">
-          Concluir
+
+        <button mat-flat-button color="accent" *ngIf="podeContinuarAtendimento()" (click)="irParaAtendimento()">
+          Continuar Atendimento
         </button>
+
+        <button mat-stroked-button color="primary" *ngIf="podeVerAtendimento()" (click)="irParaAtendimento()">
+          Ver Atendimento
+        </button>
+
         <button mat-stroked-button color="warn" *ngIf="podeCancelar()" (click)="cancelar()">
           Cancelar
         </button>
@@ -132,7 +140,10 @@ export class AgendamentoDetalhesDialogComponent implements OnInit {
   agendamento: Agendamento;
   paciente?: Paciente;
   procedimentos: Procedimento[] = [];
+  evolucao?: EvolucaoEstetica;
   loading = false;
+
+  private router = inject(Router);
 
   constructor(
     public dialogRef: MatDialogRef<AgendamentoDetalhesDialogComponent>,
@@ -148,6 +159,10 @@ export class AgendamentoDetalhesDialogComponent implements OnInit {
   carregarDados() {
     this.apiService.buscarPaciente(this.agendamento.pacienteId).subscribe(p => this.paciente = p);
 
+    this.apiService.buscarEvolucaoPorAgendamento(this.agendamento.id!).pipe(
+      catchError(() => of(null))
+    ).subscribe(ev => this.evolucao = ev || undefined);
+
     if (this.agendamento.procedimentosIds?.length) {
       forkJoin(
         this.agendamento.procedimentosIds.map(id => this.apiService.listarProcedimentos())
@@ -161,8 +176,19 @@ export class AgendamentoDetalhesDialogComponent implements OnInit {
   }
 
   podeConfirmar() { return this.agendamento.status === 'AGENDADO'; }
-  podeIniciar() { return ['AGENDADO', 'CONFIRMADO'].includes(this.agendamento.status!); }
-  podeConcluir() { return this.agendamento.status === 'EM_ATENDIMENTO'; }
+
+  podeRegistrarAtendimento() {
+    return ['AGENDADO', 'CONFIRMADO'].includes(this.agendamento.status!) && !this.evolucao;
+  }
+
+  podeContinuarAtendimento() {
+    return this.agendamento.status === 'EM_ATENDIMENTO' || (this.evolucao && !this.evolucao.finalizado);
+  }
+
+  podeVerAtendimento() {
+    return this.evolucao && this.evolucao.finalizado;
+  }
+
   podeCancelar() { return !['CONCLUIDO', 'CANCELADO'].includes(this.agendamento.status!); }
   podeMarcarFalta() { return ['AGENDADO', 'CONFIRMADO'].includes(this.agendamento.status!); }
 
@@ -178,29 +204,9 @@ export class AgendamentoDetalhesDialogComponent implements OnInit {
     });
   }
 
-  iniciar() {
-    this.loading = true;
-    const atualizado = { ...this.agendamento, status: 'EM_ATENDIMENTO' as any };
-    this.apiService.atualizarAgendamento(this.agendamento.id!, atualizado).subscribe({
-      next: () => {
-        this.loading = false;
-        this.notificationService.showSuccess('Atendimento iniciado!');
-        this.atualizarLocal('EM_ATENDIMENTO');
-      },
-      error: () => this.loading = false
-    });
-  }
-
-  concluir() {
-    this.loading = true;
-    this.apiService.concluirAgendamento(this.agendamento.id!).subscribe({
-      next: () => {
-        this.loading = false;
-        this.notificationService.showSuccess('Agendamento concluído!');
-        this.atualizarLocal('CONCLUIDO');
-      },
-      error: () => this.loading = false
-    });
+  irParaAtendimento() {
+    this.dialogRef.close();
+    this.router.navigate(['/agendamentos', this.agendamento.id, 'atendimento']);
   }
 
   cancelar() {
@@ -236,14 +242,21 @@ export class AgendamentoDetalhesDialogComponent implements OnInit {
 
   editar() {
     const editRef = this.dialog.open(AgendamentoDialogComponent, {
-      width: '500px',
+      width: '600px',
+      maxWidth: '95vw',
       data: { agendamento: this.agendamento }
     });
 
     editRef.afterClosed().subscribe(result => {
       if (result) {
-        this.apiService.atualizarAgendamento(this.agendamento.id!, result).subscribe(() => {
-          this.dialogRef.close(true);
+        this.apiService.atualizarAgendamento(this.agendamento.id!, result).subscribe({
+          next: () => {
+            this.notificationService.showSuccess('Agendamento atualizado com sucesso!');
+            this.dialogRef.close(true);
+          },
+          error: (err) => {
+            console.error('Erro ao atualizar agendamento', err);
+          }
         });
       }
     });

@@ -1,0 +1,124 @@
+<div class="atendimento-container" *ngIf="agendamento">
+  <header class="header">
+    <div class="title-section">
+      <button mat-icon-button (click)="voltar()">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <h1>Registro de Atendimento</h1>
+    </div>
+    <div class="actions">
+      <button mat-stroked-button color="primary" (click)="salvar()" [disabled]="loading || evolucao?.finalizado">
+        Salvar Rascunho
+      </button>
+      <button mat-flat-button color="primary" (click)="finalizar()" [disabled]="loading || finalizando || evolucao?.finalizado">
+        Finalizar Atendimento
+      </button>
+    </div>
+  </header>
+
+  <div class="content-grid">
+    <div class="sidebar">
+      <mat-card class="info-card">
+        <mat-card-header>
+          <mat-card-title>Paciente</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="paciente-resumo" *ngIf="paciente">
+            <div class="avatar">{{ paciente.nome.charAt(0).toUpperCase() }}</div>
+            <div class="details">
+              <strong>{{ paciente.nome }}</strong>
+              <span>CPF: {{ paciente.cpf || 'Não informado' }}</span>
+              <span>Tel: {{ paciente.telefone || 'Não informado' }}</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="info-card">
+        <mat-card-header>
+          <mat-card-title>Dados do Agendamento</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="agendamento-info">
+            <div class="info-item">
+              <label>Data/Hora:</label>
+              <span>{{ agendamento.dataHoraInicio | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+            <div class="info-item">
+              <label>Procedimentos Previstos:</label>
+              <mat-chip-set>
+                <mat-chip *ngFor="let id of agendamento.procedimentosIds">{{ getProcedimentosNomes([id]) }}</mat-chip>
+              </mat-chip-set>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <div class="main-content">
+      <form [formGroup]="atendimentoForm">
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>Evolução Clínica</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="form-grid">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Relato Clínico (Obrigatório)</mat-label>
+                <textarea matInput formControlName="relatoClinico" rows="4" placeholder="Descreva o que foi feito e como o paciente reagiu..."></textarea>
+                <mat-error *ngIf="atendimentoForm.get('relatoClinico')?.hasError('required')">
+                  Relato clínico é obrigatório.
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Procedimentos Realizados</mat-label>
+                <mat-select formControlName="procedimentosRealizadosIds" multiple>
+                  <mat-option *ngFor="let proc of procedimentos" [value]="proc.id">
+                    {{ proc.nome }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <div class="row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Locais de Aplicação</mat-label>
+                  <mat-select formControlName="locaisIds" multiple>
+                    <mat-option *ngFor="let local of locais" [value]="local.id">
+                      {{ local.nome }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Retorno Recomendado</mat-label>
+                  <input matInput formControlName="retornoRecomendado" placeholder="Ex: 15 dias">
+                </mat-form-field>
+              </div>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Orientações Pós-Procedimento</mat-label>
+                <textarea matInput formControlName="orientacoesPosProcedimento" rows="2"></textarea>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Intercorrências</mat-label>
+                <textarea matInput formControlName="intercorrencias" rows="2"></textarea>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Observações Adicionais</mat-label>
+                <textarea matInput formControlName="observacoes" rows="2"></textarea>
+              </mat-form-field>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="loading && !agendamento" class="loading-full">
+  <mat-spinner></mat-spinner>
+  <span>Carregando atendimento...</span>
+</div>

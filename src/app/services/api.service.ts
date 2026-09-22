@@ -35,7 +35,7 @@ export class ApiService {
       .set('page', page)
       .set('size', size)
       .set('sort', sort);
-    return this.http.get<Page<Paciente>>(`${this.baseUrl}/paciente`, { params });
+    return this.http.get<Page<Paciente>>(`${this.baseUrl}/paciente/listar`, { params });
   }
 
   buscarPacientesPorCriterios(nome?: string, cpf?: string, email?: string, page: number = 0, size: number = 10, sort: string = 'nome,asc'): Observable<Page<Paciente>> {
@@ -48,23 +48,23 @@ export class ApiService {
     if (cpf) params = params.set('cpf', cpf);
     if (email) params = params.set('email', email);
 
-    return this.http.get<Page<Paciente>>(`${this.baseUrl}/paciente/buscar`, { params });
+    return this.http.get<Page<Paciente>>(`${this.baseUrl}/paciente/criterios`, { params });
   }
 
   buscarPaciente(id: number): Observable<Paciente> {
-    return this.http.get<Paciente>(`${this.baseUrl}/paciente/${id}`);
+    return this.http.get<Paciente>(`${this.baseUrl}/paciente/buscar/${id}`);
   }
 
   criarPaciente(paciente: Paciente): Observable<Paciente> {
-    return this.http.post<Paciente>(`${this.baseUrl}/paciente`, paciente);
+    return this.http.post<Paciente>(`${this.baseUrl}/paciente/criar`, paciente);
   }
 
   atualizarPaciente(id: number, paciente: Paciente): Observable<Paciente> {
-    return this.http.put<Paciente>(`${this.baseUrl}/paciente/${id}`, paciente);
+    return this.http.put<Paciente>(`${this.baseUrl}/paciente/atualizar/${id}`, paciente);
   }
 
   deletarPaciente(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/paciente/${id}`);
+    return this.http.delete<void>(`${this.baseUrl}/paciente/deletar/${id}`);
   }
 
   // Agendamentos
@@ -72,20 +72,24 @@ export class ApiService {
     let params = new HttpParams();
     if (data) params = params.set('data', data);
     if (profissionalId) params = params.set('profissionalId', profissionalId);
-    return this.http.get<Agendamento[]>(`${this.baseUrl}/agendamento`, { params });
+    return this.http.get<Agendamento[]>(`${this.baseUrl}/agendamento/listar-dia-profissional`, { params });
   }
 
   listarAgendamentosPorStatus(status: string): Observable<Agendamento[]> {
     const params = new HttpParams().set('status', status);
-    return this.http.get<Agendamento[]>(`${this.baseUrl}/agendamento/status`, { params });
+    return this.http.get<Agendamento[]>(`${this.baseUrl}/agendamento/listar-por-status`, { params });
+  }
+
+  listarTodosAgendamentos(): Observable<Agendamento[]> {
+    return this.http.get<Agendamento[]>(`${this.baseUrl}/agendamento/listar-todos`);
   }
 
   criarAgendamento(agendamento: Agendamento): Observable<Agendamento> {
-    return this.http.post<Agendamento>(`${this.baseUrl}/agendamento`, agendamento);
+    return this.http.post<Agendamento>(`${this.baseUrl}/agendamento/criar`, agendamento);
   }
 
   atualizarAgendamento(id: number, agendamento: Agendamento): Observable<Agendamento> {
-    return this.http.put<Agendamento>(`${this.baseUrl}/agendamento/${id}`, agendamento);
+    return this.http.patch<Agendamento>(`${this.baseUrl}/agendamento/atualizar/${id}`, agendamento);
   }
 
   cancelarAgendamento(id: number): Observable<void> {
@@ -106,44 +110,72 @@ export class ApiService {
 
   // Configurações (Procedimentos, Insumos, Locais)
   listarProcedimentos(): Observable<Procedimento[]> {
-    return this.http.get<Procedimento[]>(`${this.baseUrl}/procedimento`);
+    return this.http.get<Procedimento[]>(`${this.baseUrl}/configs/procedimentos/listar`);
   }
 
   criarProcedimento(procedimento: Procedimento): Observable<Procedimento> {
-    return this.http.post<Procedimento>(`${this.baseUrl}/procedimento`, procedimento);
+    return this.http.post<Procedimento>(`${this.baseUrl}/configs/procedimentos/criar`, procedimento);
   }
 
   listarInsumos(): Observable<Insumo[]> {
-    return this.http.get<Insumo[]>(`${this.baseUrl}/insumo`);
+    return this.http.get<Insumo[]>(`${this.baseUrl}/configs/insumos/listar`);
   }
 
   criarInsumo(insumo: Insumo): Observable<Insumo> {
-    return this.http.post<Insumo>(`${this.baseUrl}/insumo`, insumo);
+    return this.http.post<Insumo>(`${this.baseUrl}/configs/insumos/criar`, insumo);
   }
 
   listarLocais(): Observable<LocalAplicacao[]> {
-    return this.http.get<LocalAplicacao[]>(`${this.baseUrl}/local-aplicacao`);
+    return this.http.get<LocalAplicacao[]>(`${this.baseUrl}/configs/locaisaplicacao/listar`);
   }
 
   criarLocal(local: LocalAplicacao): Observable<LocalAplicacao> {
-    return this.http.post<LocalAplicacao>(`${this.baseUrl}/local-aplicacao`, local);
+    return this.http.post<LocalAplicacao>(`${this.baseUrl}/configs/locaisaplicacao/criar`, local);
   }
 
   // Evolução Clínica
   criarEvolucao(evolucao: EvolucaoEstetica): Observable<EvolucaoEstetica> {
-    return this.http.post<EvolucaoEstetica>(`${this.baseUrl}/evolucao-estetica`, evolucao);
+    return this.http.post<EvolucaoEstetica>(`${this.baseUrl}/evolucao-clinica/criar`, evolucao);
+  }
+
+  buscarEvolucaoPorAgendamento(agendamentoId: number): Observable<EvolucaoEstetica> {
+    return this.http.get<EvolucaoEstetica>(`${this.baseUrl}/atendimentos/agendamento/${agendamentoId}`);
+  }
+
+  buscarEvolucoesPorPaciente(pacienteId: number): Observable<EvolucaoEstetica[]> {
+    return this.http.get<EvolucaoEstetica[]>(`${this.baseUrl}/atendimentos/paciente/${pacienteId}`);
+  }
+
+  atualizarEvolucao(id: number, evolucao: EvolucaoEstetica): Observable<EvolucaoEstetica> {
+    return this.http.put<EvolucaoEstetica>(`${this.baseUrl}/atendimentos/${id}`, evolucao);
+  }
+
+  finalizarEvolucao(id: number): Observable<void> {
+    return this.http.patch<void>(`${this.baseUrl}/atendimentos/${id}/finalizar`, {});
+  }
+
+  buscarAgendamento(id: number): Observable<Agendamento> {
+    return this.http.get<Agendamento>(`${this.baseUrl}/agendamento/buscar/${id}`);
+  }
+
+  listarAgendamentosPorPaciente(pacienteId: number): Observable<Agendamento[]> {
+    return this.http.get<Agendamento[]>(`${this.baseUrl}/agendamento/paciente/${pacienteId}`);
+  }
+
+  buscarAtendimentoPorId(id: number): Observable<EvolucaoEstetica> {
+    return this.http.get<EvolucaoEstetica>(`${this.baseUrl}/atendimentos/${id}`);
   }
 
   // Usuários
   listarUsuarios(): Observable<UsuarioResponse[]> {
-    return this.http.get<UsuarioResponse[]>(`${this.baseUrl}/usuario`);
+    return this.http.get<UsuarioResponse[]>(`${this.baseUrl}/usuarios/listar`);
   }
 
   buscarUsuarioPorLogin(login: string): Observable<UsuarioResponse> {
-    return this.http.get<UsuarioResponse>(`${this.baseUrl}/usuario/${login}`);
+    return this.http.get<UsuarioResponse>(`${this.baseUrl}/usuarios/${login}`);
   }
 
   criarUsuario(usuario: UsuarioRequest): Observable<UsuarioResponse> {
-    return this.http.post<UsuarioResponse>(`${this.baseUrl}/usuario`, usuario);
+    return this.http.post<UsuarioResponse>(`${this.baseUrl}/usuarios/criar`, usuario);
   }
 }

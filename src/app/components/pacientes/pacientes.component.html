@@ -13,6 +13,9 @@
   </header>
 
   <div class="premium-grid-container">
+    <div *ngIf="loading" class="loading-overlay">
+      <mat-spinner diameter="50"></mat-spinner>
+    </div>
     <!-- Coluna Esquerda: Resumo do Paciente -->
     <aside class="premium-sidebar">
       <div class="resumo-card">
@@ -84,120 +87,173 @@
       </div>
     </aside>
 
-    <!-- Coluna Direita: Formulários -->
+    <!-- Coluna Direita: Formulários e Histórico -->
     <main class="premium-content">
-      <form [formGroup]="pacienteForm">
-        <!-- Card: Informações Pessoais -->
-        <section class="premium-card">
-          <div class="card-header">
-            <mat-icon>person_outline</mat-icon>
-            <h3>Informações Pessoais</h3>
+      <mat-tab-group class="premium-tabs">
+        <mat-tab label="Ficha Cadastral">
+          <form [formGroup]="pacienteForm" class="tab-content">
+            <!-- Card: Informações Pessoais -->
+            <section class="premium-card">
+              <div class="card-header">
+                <mat-icon>person_outline</mat-icon>
+                <h3>Informações Pessoais</h3>
+              </div>
+              <div class="card-body">
+                <div class="premium-form-grid">
+                  <div class="form-group col-4">
+                    <label>Nome Completo</label>
+                    <input type="text" formControlName="nome" placeholder="Digite o nome completo" class="premium-input">
+                  </div>
+                  <div class="form-group col-2">
+                    <label>CPF</label>
+                    <input type="text" formControlName="cpf" placeholder="000.000.000-00" class="premium-input">
+                  </div>
+                  <div class="form-group col-2">
+                    <label>Data de Nascimento</label>
+                    <input type="date" formControlName="dataNascimento" class="premium-input">
+                  </div>
+                  <div class="form-group col-2">
+                    <label>Tipo Sanguíneo</label>
+                    <input type="text" formControlName="tipoSanguineo" placeholder="Ex: O+" class="premium-input">
+                  </div>
+                  <div class="form-group col-2">
+                    <label>Responsável</label>
+                    <input type="text" formControlName="nomeResponsavel" placeholder="Nome do responsável" class="premium-input">
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Card: Contato -->
+            <section class="premium-card">
+              <div class="card-header">
+                <mat-icon>mail_outline</mat-icon>
+                <h3>Contato</h3>
+              </div>
+              <div class="card-body">
+                <div class="premium-form-grid">
+                  <div class="form-group col-2">
+                    <label>Email</label>
+                    <input type="email" formControlName="email" placeholder="email@exemplo.com" class="premium-input">
+                  </div>
+                  <div class="form-group col-2">
+                    <label>Telefone</label>
+                    <input type="text" formControlName="telefone" placeholder="(00) 00000-0000" class="premium-input">
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Card: Endereço -->
+            <section class="premium-card" formGroupName="endereco">
+              <div class="card-header">
+                <mat-icon>location_on</mat-icon>
+                <h3>Endereço</h3>
+              </div>
+              <div class="card-body">
+                <div class="premium-form-grid">
+                  <div class="form-group col-1">
+                    <label>CEP</label>
+                    <input type="text" formControlName="cep" placeholder="00000-000" class="premium-input">
+                  </div>
+                  <div class="form-group col-3">
+                    <label>Logradouro</label>
+                    <input type="text" formControlName="logradouro" placeholder="Rua, Avenida..." class="premium-input">
+                  </div>
+                  <div class="form-group col-1">
+                    <label>Número</label>
+                    <input type="text" formControlName="numero" placeholder="Nº" class="premium-input">
+                  </div>
+                  <div class="form-group col-1">
+                    <label>Bairro</label>
+                    <input type="text" formControlName="bairro" placeholder="Bairro" class="premium-input">
+                  </div>
+                  <div class="form-group col-1">
+                    <label>Cidade</label>
+                    <input type="text" formControlName="cidade" placeholder="Cidade" class="premium-input">
+                  </div>
+                  <div class="form-group col-1">
+                    <label>Estado</label>
+                    <input type="text" formControlName="estado" placeholder="UF" class="premium-input">
+                  </div>
+                  <div class="form-group col-4">
+                    <label>Complemento</label>
+                    <input type="text" formControlName="complemento" placeholder="Apt, Bloco..." class="premium-input">
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Card: Anamnese / Notas -->
+            <section class="premium-card">
+              <div class="card-header">
+                <mat-icon>assignment</mat-icon>
+                <h3>Anamnese e Notas Permanentes</h3>
+              </div>
+              <div class="card-body">
+                <div class="form-group col-4">
+                  <label>Observações Gerais</label>
+                  <textarea formControlName="observacoesGerais" rows="5" placeholder="Descreva observações clínicas permanentes, alergias, etc..." class="premium-input textarea"></textarea>
+                </div>
+              </div>
+            </section>
+
+            <!-- Ação de Excluir sutil -->
+            <div class="delete-action" *ngIf="pacienteSelecionado">
+              <button (click)="deletarPaciente()" class="btn-text-delete">Excluir ficha do paciente</button>
+            </div>
+          </form>
+        </mat-tab>
+
+        <mat-tab label="Histórico de Evoluções" *ngIf="pacienteSelecionado">
+          <div class="tab-content historico-list">
+            <div *ngIf="historicoEvolucoes.length === 0" class="empty-state">
+              <mat-icon>history_edu</mat-icon>
+              <p>Nenhuma evolução registrada para este paciente.</p>
+            </div>
+
+            <mat-card *ngFor="let ev of historicoEvolucoes" class="historico-card">
+              <mat-card-header>
+                <mat-card-title>{{ ev.dataAtendimento | date:'dd/MM/yyyy HH:mm' }}</mat-card-title>
+                <mat-card-subtitle>Procedimentos: {{ getProcedimentosNomes(ev.procedimentosRealizadosIds || []) }}</mat-card-subtitle>
+              </mat-card-header>
+              <mat-card-content>
+                <p><strong>Relato:</strong> {{ ev.relatoClinico }}</p>
+                <p *ngIf="ev.orientacoesPosProcedimento"><strong>Orientações:</strong> {{ ev.orientacoesPosProcedimento }}</p>
+              </mat-card-content>
+              <mat-card-actions align="end">
+                <button mat-button color="primary" (click)="verAtendimento(ev.agendamentoId)">Ver Detalhes</button>
+              </mat-card-actions>
+            </mat-card>
           </div>
-          <div class="card-body">
-            <div class="premium-form-grid">
-              <div class="form-group col-4">
-                <label>Nome Completo</label>
-                <input type="text" formControlName="nome" placeholder="Digite o nome completo" class="premium-input">
-              </div>
-              <div class="form-group col-2">
-                <label>CPF</label>
-                <input type="text" formControlName="cpf" placeholder="000.000.000-00" class="premium-input">
-              </div>
-              <div class="form-group col-2">
-                <label>Data de Nascimento</label>
-                <input type="date" formControlName="dataNascimento" class="premium-input">
-              </div>
-              <div class="form-group col-2">
-                <label>Tipo Sanguíneo</label>
-                <input type="text" formControlName="tipoSanguineo" placeholder="Ex: O+" class="premium-input">
-              </div>
-              <div class="form-group col-2">
-                <label>Responsável</label>
-                <input type="text" formControlName="nomeResponsavel" placeholder="Nome do responsável" class="premium-input">
-              </div>
+        </mat-tab>
+
+        <mat-tab label="Agenda do Paciente" *ngIf="pacienteSelecionado">
+          <div class="tab-content historico-list">
+             <div *ngIf="historicoAgendamentos.length === 0" class="empty-state">
+              <mat-icon>event_busy</mat-icon>
+              <p>Nenhum agendamento encontrado.</p>
+            </div>
+
+            <div class="agendamento-item-list" *ngFor="let ag of historicoAgendamentos">
+               <div class="ag-data">
+                 <span class="dia">{{ ag.dataHoraInicio | date:'dd' }}</span>
+                 <span class="mes">{{ ag.dataHoraInicio | date:'MMM' }}</span>
+               </div>
+               <div class="ag-info">
+                 <span class="horario">{{ ag.dataHoraInicio | date:'HH:mm' }}</span>
+                 <span class="procs">{{ getProcedimentosNomes(ag.procedimentosIds) }}</span>
+                 <span [class]="'status-pill ' + ag.status">{{ ag.status }}</span>
+               </div>
+               <div class="ag-actions">
+                 <button mat-icon-button (click)="verAtendimento(ag.id!)" *ngIf="ag.status === 'CONCLUIDO'">
+                   <mat-icon>visibility</mat-icon>
+                 </button>
+               </div>
             </div>
           </div>
-        </section>
-
-        <!-- Card: Contato -->
-        <section class="premium-card">
-          <div class="card-header">
-            <mat-icon>mail_outline</mat-icon>
-            <h3>Contato</h3>
-          </div>
-          <div class="card-body">
-            <div class="premium-form-grid">
-              <div class="form-group col-2">
-                <label>Email</label>
-                <input type="email" formControlName="email" placeholder="email@exemplo.com" class="premium-input">
-              </div>
-              <div class="form-group col-2">
-                <label>Telefone</label>
-                <input type="text" formControlName="telefone" placeholder="(00) 00000-0000" class="premium-input">
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Card: Endereço -->
-        <section class="premium-card" formGroupName="endereco">
-          <div class="card-header">
-            <mat-icon>location_on</mat-icon>
-            <h3>Endereço</h3>
-          </div>
-          <div class="card-body">
-            <div class="premium-form-grid">
-              <div class="form-group col-1">
-                <label>CEP</label>
-                <input type="text" formControlName="cep" placeholder="00000-000" class="premium-input">
-              </div>
-              <div class="form-group col-3">
-                <label>Logradouro</label>
-                <input type="text" formControlName="logradouro" placeholder="Rua, Avenida..." class="premium-input">
-              </div>
-              <div class="form-group col-1">
-                <label>Número</label>
-                <input type="text" formControlName="numero" placeholder="Nº" class="premium-input">
-              </div>
-              <div class="form-group col-1">
-                <label>Bairro</label>
-                <input type="text" formControlName="bairro" placeholder="Bairro" class="premium-input">
-              </div>
-              <div class="form-group col-1">
-                <label>Cidade</label>
-                <input type="text" formControlName="cidade" placeholder="Cidade" class="premium-input">
-              </div>
-              <div class="form-group col-1">
-                <label>Estado</label>
-                <input type="text" formControlName="estado" placeholder="UF" class="premium-input">
-              </div>
-              <div class="form-group col-4">
-                <label>Complemento</label>
-                <input type="text" formControlName="complemento" placeholder="Apt, Bloco..." class="premium-input">
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Card: Anamnese / Notas -->
-        <section class="premium-card">
-          <div class="card-header">
-            <mat-icon>assignment</mat-icon>
-            <h3>Anamnese e Notas</h3>
-          </div>
-          <div class="card-body">
-            <div class="form-group col-4">
-              <label>Observações Gerais</label>
-              <textarea formControlName="observacoesGerais" rows="5" placeholder="Descreva observações clínicas relevantes..." class="premium-input textarea"></textarea>
-            </div>
-          </div>
-        </section>
-
-        <!-- Ação de Excluir sutil -->
-        <div class="delete-action" *ngIf="pacienteSelecionado">
-          <button (click)="deletarPaciente()" class="btn-text-delete">Excluir ficha do paciente</button>
-        </div>
-      </form>
+        </mat-tab>
+      </mat-tab-group>
     </main>
   </div>
 </div>

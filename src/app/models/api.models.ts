@@ -84,17 +84,19 @@ export interface Agendamento {
 
 export interface EvolucaoEstetica {
   id?: number;
-  evolucaoId?: number;
-  agendamentoId?: number;
-  pacienteId?: number;
-  profissionalId?: number;
+  agendamentoId: number;
+  pacienteId: number;
+  profissionalId: number;
   dataAtendimento?: string;
   relatoClinico?: string;
-  numeroSessao?: number;
-  pesoPacienteKg?: number;
-  doseAplicadaMg?: number;
+  observacoes?: string;
+  orientacoesPosProcedimento?: string;
+  intercorrencias?: string;
+  retornoRecomendado?: string;
+  procedimentosRealizadosIds?: number[];
   locaisIds?: number[];
   consumos?: Insumo[];
+  finalizado?: boolean;
 }
 
 export interface Pageable {

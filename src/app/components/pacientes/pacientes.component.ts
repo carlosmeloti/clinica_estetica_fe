@@ -9,10 +9,12 @@ import { MatCardModule } from '@angular/material/card';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatPaginatorIntl } from '@angular/material/paginator';
 import { ApiService } from '../../services/api.service';
-import { Paciente } from '../../models/api.models';
+import { Paciente, Agendamento, EvolucaoEstetica, Procedimento } from '../../models/api.models';
 import { NotificationService } from '../../services/notification.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-pacientes',
@@ -28,7 +30,8 @@ import { NotificationService } from '../../services/notification.service';
     MatCardModule,
     MatTabsModule,
     MatFormFieldModule,
-    MatInputModule
+    MatInputModule,
+    MatProgressSpinnerModule
   ],
   templateUrl: './pacientes.component.html',
   styleUrl: './pacientes.component.scss',
@@ -38,6 +41,7 @@ export class PacientesComponent implements OnInit {
   private apiService = inject(ApiService);
   private fb = inject(FormBuilder);
   private notificationService = inject(NotificationService);
+  private router = inject(Router);
 
   pacientes: Paciente[] = [];
   totalElements = 0;
@@ -48,6 +52,9 @@ export class PacientesComponent implements OnInit {
 
   pacienteForm: FormGroup;
   pacienteSelecionado: Paciente | null = null;
+  historicoAgendamentos: Agendamento[] = [];
+  historicoEvolucoes: EvolucaoEstetica[] = [];
+  procedimentos: Procedimento[] = [];
 
   displayedColumns: string[] = ['nome', 'cpf', 'email', 'telefone'];
 
@@ -81,19 +88,30 @@ export class PacientesComponent implements OnInit {
 
   ngOnInit(): void {
     this.carregarPacientes();
+    this.apiService.listarProcedimentos().subscribe(res => this.procedimentos = res);
   }
 
   carregarPacientes(): void {
     this.loading = true;
     this.apiService.buscarPacientesPorCriterios(this.termoPesquisa, undefined, undefined, this.pageIndex, this.pageSize, 'nome,asc').subscribe({
       next: (page) => {
-        this.pacientes = page.content || [];
-        this.totalElements = page.totalElements || 0;
+        if (page && page.content) {
+          this.pacientes = page.content;
+          this.totalElements = page.totalElements || 0;
+        } else if (Array.isArray(page)) {
+          // Fallback caso o backend retorne array direto (não paginado)
+          this.pacientes = page;
+          this.totalElements = page.length;
+        } else {
+          this.pacientes = [];
+          this.totalElements = 0;
+        }
         this.loading = false;
       },
-      error: () => {
+      error: (error) => {
         this.loading = false;
-        this.notificationService.showError('Erro ao carregar pacientes.');
+        // O erro já deve ter sido mostrado pelo Interceptor, mas garantimos aqui se necessário
+        console.error('Erro ao carregar pacientes', error);
       }
     });
   }
@@ -117,10 +135,39 @@ export class PacientesComponent implements OnInit {
   selecionarPaciente(paciente: Paciente): void {
     this.pacienteSelecionado = paciente;
     this.pacienteForm.patchValue(paciente);
+    this.carregarHistorico(paciente.id!);
+  }
+
+  carregarHistorico(pacienteId: number): void {
+    this.apiService.listarAgendamentosPorPaciente(pacienteId).subscribe({
+      next: (res) => {
+        const agendamentos = Array.isArray(res) ? res : (res as any)?.content || [];
+        this.historicoAgendamentos = agendamentos.sort((a: Agendamento, b: Agendamento) => new Date(b.dataHoraInicio).getTime() - new Date(a.dataHoraInicio).getTime());
+      },
+      error: (err) => console.error('Erro ao carregar histórico de agendamentos', err)
+    });
+    this.apiService.buscarEvolucoesPorPaciente(pacienteId).subscribe({
+      next: (res) => {
+        const evolucoes = Array.isArray(res) ? res : (res as any)?.content || [];
+        this.historicoEvolucoes = evolucoes.sort((a: EvolucaoEstetica, b: EvolucaoEstetica) => new Date(b.dataAtendimento || 0).getTime() - new Date(a.dataAtendimento || 0).getTime());
+      },
+      error: (err) => console.error('Erro ao carregar histórico de evoluções', err)
+    });
+  }
+
+  getProcedimentosNomes(ids: number[]): string {
+    return ids.map(id => this.procedimentos.find(p => p.id === id)?.nome || id).join(', ');
+  }
+
+  verAtendimento(agendamentoId: number): void {
+    this.router.navigate(['/agendamentos', agendamentoId, 'atendimento']);
   }
 
   salvar(): void {
-    if (this.pacienteForm.invalid) return;
+    if (this.pacienteForm.invalid) {
+      this.pacienteForm.markAllAsTouched();
+      return;
+    }
 
     this.loading = true;
     const dados = this.pacienteForm.getRawValue();
@@ -131,7 +178,10 @@ export class PacientesComponent implements OnInit {
           this.carregarPacientes();
           this.notificationService.showSuccess('Paciente atualizado com sucesso!');
         },
-        error: () => this.loading = false
+        error: (err) => {
+          this.loading = false;
+          console.error('Erro ao atualizar paciente', err);
+        }
       });
     } else {
       this.apiService.criarPaciente(dados).subscribe({
@@ -141,7 +191,10 @@ export class PacientesComponent implements OnInit {
           this.carregarPacientes();
           this.notificationService.showSuccess('Paciente criado com sucesso!');
         },
-        error: () => this.loading = false
+        error: (err) => {
+          this.loading = false;
+          console.error('Erro ao criar paciente', err);
+        }
       });
     }
   }
