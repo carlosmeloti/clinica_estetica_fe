@@ -58,6 +58,7 @@ export class LoginComponent implements OnInit {
       },
       error: (err) => {
         this.loading = false;
+        // A notificação de erro já é tratada pelo authInterceptor
         console.error('Login error', err);
       }
     });

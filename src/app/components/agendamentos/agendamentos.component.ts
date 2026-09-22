@@ -13,6 +13,8 @@ import { MatDividerModule } from '@angular/material/divider';
 import { ApiService } from '../../services/api.service';
 import { Agendamento, Paciente, Procedimento } from '../../models/api.models';
 import { AgendamentoDialogComponent } from './agendamento-dialog/agendamento-dialog.component';
+import { AgendamentoDetalhesDialogComponent } from './agendamento-detalhes-dialog/agendamento-detalhes-dialog.component';
+import { NotificationService } from '../../services/notification.service';
 import { forkJoin } from 'rxjs';
 
 import { FullCalendarModule } from '@fullcalendar/angular';
@@ -36,7 +38,9 @@ import interactionPlugin, { EventResizeDoneArg } from '@fullcalendar/interaction
     MatNativeDateModule,
     MatListModule,
     MatDividerModule,
-    FullCalendarModule
+    FullCalendarModule,
+    AgendamentoDialogComponent,
+    AgendamentoDetalhesDialogComponent
   ],
   templateUrl: './agendamentos.component.html',
   styleUrl: './agendamentos.component.scss'
@@ -44,11 +48,13 @@ import interactionPlugin, { EventResizeDoneArg } from '@fullcalendar/interaction
 export class AgendamentosComponent implements OnInit {
   private apiService = inject(ApiService);
   private dialog = inject(MatDialog);
+  private notificationService = inject(NotificationService);
 
   agendamentos = signal<Agendamento[]>([]);
   pacientes = signal<Paciente[]>([]);
   procedimentos = signal<Procedimento[]>([]);
   selectedDate = signal<Date | null>(new Date());
+  loading = signal<boolean>(false);
 
   calendarOptions = signal<CalendarOptions>({
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
@@ -76,25 +82,40 @@ export class AgendamentosComponent implements OnInit {
   }
 
   carregarDados(): void {
+    this.loading.set(true);
     forkJoin({
       agendamentos: this.apiService.listarAgendamentos(),
       pacientes: this.apiService.listarPacientes(0, 1000),
       procedimentos: this.apiService.listarProcedimentos()
-    }).subscribe(res => {
-      this.agendamentos.set(res.agendamentos);
-      this.pacientes.set(res.pacientes.content);
-      this.procedimentos.set(res.procedimentos);
-      this.atualizarEventosCalendario();
+    }).subscribe({
+      next: (res) => {
+        this.agendamentos.set(res.agendamentos);
+        this.pacientes.set(res.pacientes.content);
+        this.procedimentos.set(res.procedimentos);
+        this.atualizarEventosCalendario();
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.notificationService.showError('Erro ao carregar dados da agenda.');
+      }
     });
+  }
+
+  getProcedimentosNomes(ids: number[]): string {
+    if (!ids || ids.length === 0) return 'Nenhum procedimento';
+    return ids.map(id => this.procedimentos().find(pr => pr.id === id)?.nome || `Proc ${id}`).join(', ');
   }
 
   atualizarEventosCalendario(): void {
     const eventos = this.agendamentos().map(a => ({
       id: a.id?.toString(),
-      title: `${this.getPacienteNome(a.pacienteId)} - ${this.getProcedimentoNome(a.procedimentoId)}`,
+      title: `${this.getPacienteNome(a.pacienteId)} - ${this.getProcedimentosNomes(a.procedimentosIds)}`,
       start: a.dataHoraInicio,
       end: a.dataHoraFim,
-      extendedProps: { ...a }
+      extendedProps: { ...a },
+      backgroundColor: this.getStatusColor(a.status),
+      borderColor: this.getStatusColor(a.status)
     }));
 
     this.calendarOptions.update(options => ({
@@ -102,6 +123,18 @@ export class AgendamentosComponent implements OnInit {
       events: eventos,
       initialDate: this.selectedDate() || new Date()
     }));
+  }
+
+  getStatusColor(status?: string): string {
+    switch (status) {
+      case 'AGENDADO': return '#3f51b5';
+      case 'CONFIRMADO': return '#4caf50';
+      case 'EM_ATENDIMENTO': return '#ff9800';
+      case 'CONCLUIDO': return '#9e9e9e';
+      case 'CANCELADO': return '#f44336';
+      case 'NAO_COMPARECEU': return '#795548';
+      default: return '#3f51b5';
+    }
   }
 
   handleDateSelect(selectInfo: DateSelectArg) {
@@ -112,7 +145,20 @@ export class AgendamentosComponent implements OnInit {
 
   handleEventClick(clickInfo: EventClickArg) {
     const agendamento = clickInfo.event.extendedProps as Agendamento;
-    this.editarAgendamento(agendamento);
+    this.abrirDetalhesAgendamento(agendamento);
+  }
+
+  abrirDetalhesAgendamento(agendamento: Agendamento): void {
+    const dialogRef = this.dialog.open(AgendamentoDetalhesDialogComponent, {
+      width: '500px',
+      data: { agendamento }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.carregarDados();
+      }
+    });
   }
 
   handleEventDrop(dropInfo: EventDropArg) {
@@ -126,15 +172,19 @@ export class AgendamentosComponent implements OnInit {
   atualizarHorarioAgendamento(event: any) {
     const agendamento = event.extendedProps as Agendamento;
     if (agendamento.id) {
+      this.loading.set(true);
       const novosDados = {
         ...agendamento,
         dataHoraInicio: event.start.toISOString(),
         dataHoraFim: event.end?.toISOString() || event.start.toISOString()
       };
       this.apiService.atualizarAgendamento(agendamento.id, novosDados).subscribe({
-        next: () => this.carregarDados(),
+        next: () => {
+          this.carregarDados();
+          this.notificationService.showSuccess('Horário atualizado com sucesso!');
+        },
         error: () => {
-          alert('Erro ao atualizar horário do agendamento.');
+          this.loading.set(false);
           this.carregarDados(); // Reverte visualmente
         }
       });
@@ -157,8 +207,14 @@ export class AgendamentosComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.apiService.criarAgendamento(result).subscribe(() => {
-          this.carregarDados();
+        this.apiService.criarAgendamento(result).subscribe({
+          next: () => this.carregarDados(),
+          error: (err) => {
+            if (err.status === 409) {
+              // A notificação já foi mostrada pelo interceptor,
+              // mas podemos adicionar lógica específica aqui se necessário.
+            }
+          }
         });
       }
     });

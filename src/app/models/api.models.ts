@@ -74,10 +74,10 @@ export interface Agendamento {
   id?: number;
   pacienteId: number;
   profissionalId: number;
-  procedimentoId: number;
+  procedimentosIds: number[];
   dataHoraInicio: string;
   dataHoraFim: string;
-  status?: 'PENDENTE' | 'CONFIRMADO' | 'CANCELADO' | 'FINALIZADO' | 'AUSENTE';
+  status?: 'AGENDADO' | 'CONFIRMADO' | 'EM_ATENDIMENTO' | 'CONCLUIDO' | 'CANCELADO' | 'NAO_COMPARECEU';
   motivoConsulta?: string;
   valorPrevisto?: number;
 }
@@ -113,4 +113,13 @@ export interface Page<T> {
   last: boolean;
   numberOfElements: number;
   empty: boolean;
+}
+
+export interface ErroResponse {
+  timestamp: string;
+  status: number;
+  erro: string;
+  mensagem: string;
+  path: string;
+  campos?: { [key: string]: string };
 }

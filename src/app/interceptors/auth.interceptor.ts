@@ -31,18 +31,30 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         errorMessage = error.error.message;
       }
 
-      // 401 Unauthorized ou 500 com mensagem de token expirado
-      if (error.status === 401 || (error.status === 500 && (errorMessage.includes('ExpiredJwtException') || errorMessage.includes('JWT expired')))) {
+      // 401 Unauthorized, 403 Forbidden ou 500 com mensagem de token expirado
+      if (error.status === 401 || error.status === 403 || (error.status === 500 && (errorMessage.includes('ExpiredJwtException') || errorMessage.includes('JWT expired')))) {
         const currentUrl = router.url;
         if (!currentUrl.includes('/login')) {
           authService.setRedirectUrl(currentUrl);
-          router.navigate(['/login'], { queryParams: { expired: 'true' } });
+          if (error.status === 401 || (error.status === 500 && (errorMessage.includes('ExpiredJwtException') || errorMessage.includes('JWT expired')))) {
+            router.navigate(['/login'], { queryParams: { expired: 'true' } });
+            errorMessage = 'Sua sessão expirou. Por favor, faça login novamente.';
+          } else {
+            errorMessage = 'Você não tem permissão para acessar este recurso.';
+          }
         }
-        authService.logout();
-        errorMessage = 'Sua sessão expirou. Por favor, faça login novamente.';
+        if (error.status === 401 || (error.status === 500 && (errorMessage.includes('ExpiredJwtException') || errorMessage.includes('JWT expired')))) {
+          authService.logout();
+        }
       }
 
       notificationService.showError(errorMessage);
+
+      if (error.status === 409) {
+        // Conflito de regra de negócio, ex: agendamento duplicado
+        return throwError(() => ({ ...error, friendlyMessage: errorMessage }));
+      }
+
       return throwError(() => error);
     })
   );

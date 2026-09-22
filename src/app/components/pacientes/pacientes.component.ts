@@ -12,6 +12,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorIntl } from '@angular/material/paginator';
 import { ApiService } from '../../services/api.service';
 import { Paciente } from '../../models/api.models';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-pacientes',
@@ -36,12 +37,14 @@ import { Paciente } from '../../models/api.models';
 export class PacientesComponent implements OnInit {
   private apiService = inject(ApiService);
   private fb = inject(FormBuilder);
+  private notificationService = inject(NotificationService);
 
   pacientes: Paciente[] = [];
   totalElements = 0;
   pageSize = 10;
   pageIndex = 0;
   termoPesquisa = '';
+  loading = false;
 
   pacienteForm: FormGroup;
   pacienteSelecionado: Paciente | null = null;
@@ -51,13 +54,13 @@ export class PacientesComponent implements OnInit {
   constructor() {
     this.pacienteForm = this.fb.group({
       id: [{ value: null, disabled: true }],
-      nome: ['', Validators.required],
-      cpf: [''],
+      nome: ['', [Validators.required, Validators.minLength(3)]],
+      cpf: ['', [Validators.pattern(/^\d{3}\.\d{3}\.\d{3}-\d{2}$|^\d{11}$/)]],
       dataNascimento: [''],
       tipoSanguineo: [''],
       nomeResponsavel: [''],
       email: ['', [Validators.email]],
-      telefone: [''],
+      telefone: ['', [Validators.pattern(/^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/)]],
       endereco: this.fb.group({
         logradouro: [''],
         numero: [''],
@@ -81,9 +84,17 @@ export class PacientesComponent implements OnInit {
   }
 
   carregarPacientes(): void {
-    this.apiService.buscarPacientesPorCriterios(this.termoPesquisa, this.pageIndex, this.pageSize, 'id,desc').subscribe(page => {
-      this.pacientes = page.content;
-      this.totalElements = page.totalElements;
+    this.loading = true;
+    this.apiService.buscarPacientesPorCriterios(this.termoPesquisa, undefined, undefined, this.pageIndex, this.pageSize, 'nome,asc').subscribe({
+      next: (page) => {
+        this.pacientes = page.content || [];
+        this.totalElements = page.totalElements || 0;
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+        this.notificationService.showError('Erro ao carregar pacientes.');
+      }
     });
   }
 
@@ -111,18 +122,26 @@ export class PacientesComponent implements OnInit {
   salvar(): void {
     if (this.pacienteForm.invalid) return;
 
+    this.loading = true;
     const dados = this.pacienteForm.getRawValue();
     if (this.pacienteSelecionado && this.pacienteSelecionado.id) {
-      dados.id = this.pacienteSelecionado.id;
-      this.apiService.atualizarPaciente(dados).subscribe(() => {
-        this.carregarPacientes();
-        alert('Paciente atualizado com sucesso!');
+      this.apiService.atualizarPaciente(this.pacienteSelecionado.id, dados).subscribe({
+        next: () => {
+          this.loading = false;
+          this.carregarPacientes();
+          this.notificationService.showSuccess('Paciente atualizado com sucesso!');
+        },
+        error: () => this.loading = false
       });
     } else {
-      this.apiService.criarPaciente(dados).subscribe(() => {
-        this.novoPaciente();
-        this.carregarPacientes();
-        alert('Paciente criado com sucesso!');
+      this.apiService.criarPaciente(dados).subscribe({
+        next: () => {
+          this.loading = false;
+          this.novoPaciente();
+          this.carregarPacientes();
+          this.notificationService.showSuccess('Paciente criado com sucesso!');
+        },
+        error: () => this.loading = false
       });
     }
   }

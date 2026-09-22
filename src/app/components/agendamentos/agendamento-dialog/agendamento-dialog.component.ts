@@ -37,8 +37,8 @@ import { Observable } from 'rxjs';
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Procedimento</mat-label>
-          <mat-select formControlName="procedimentoId" required>
+          <mat-label>Procedimentos</mat-label>
+          <mat-select formControlName="procedimentosIds" multiple required>
             @for (pr of procedimentos$ | async; track pr.id) {
               <mat-option [value]="pr.id">{{ pr.nome }}</mat-option>
             }
@@ -120,13 +120,28 @@ export class AgendamentoDialogComponent implements OnInit {
   ) {
     this.agendamentoForm = this.fb.group({
       pacienteId: [null, Validators.required],
-      procedimentoId: [null, Validators.required],
-      profissionalId: [1, Validators.required], // Valor padrão se a API exigir
-      dataHoraInicio: ['', Validators.required],
-      dataHoraFim: [''],
+      procedimentosIds: [[], [Validators.required, Validators.minLength(1)]],
+      profissionalId: [1, Validators.required],
+      dataHoraInicio: ['', [Validators.required, this.validarDataFutura]],
+      dataHoraFim: ['', Validators.required],
       motivoConsulta: [''],
-      status: ['PENDENTE']
-    });
+      status: ['AGENDADO']
+    }, { validators: this.validarPeriodo });
+  }
+
+  validarDataFutura(control: any) {
+    if (!control.value) return null;
+    const data = new Date(control.value);
+    return data < new Date() ? { dataPassada: true } : null;
+  }
+
+  validarPeriodo(group: FormGroup) {
+    const inicio = group.get('dataHoraInicio')?.value;
+    const fim = group.get('dataHoraFim')?.value;
+    if (inicio && fim && new Date(fim) <= new Date(inicio)) {
+      return { periodoInvalido: true };
+    }
+    return null;
   }
 
   ngOnInit(): void {
@@ -150,14 +165,28 @@ export class AgendamentoDialogComponent implements OnInit {
     if (this.data) {
         if (this.data.agendamento) {
             // Se for edição
-            this.agendamentoForm.patchValue(this.data.agendamento);
+            const ag = this.data.agendamento;
+            this.agendamentoForm.patchValue({
+              ...ag,
+              dataHoraInicio: this.formatarParaInput(ag.dataHoraInicio),
+              dataHoraFim: this.formatarParaInput(ag.dataHoraFim)
+            });
         } else if (this.data.data) {
             // Se veio uma data do calendário (novo)
             const date = new Date(this.data.data);
-            const isoString = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
-            this.agendamentoForm.patchValue({ dataHoraInicio: isoString });
+            const isoString = this.formatarParaInput(date);
+            const endIsoString = this.formatarParaInput(new Date(date.getTime() + 60 * 60000));
+            this.agendamentoForm.patchValue({
+              dataHoraInicio: isoString,
+              dataHoraFim: endIsoString
+            });
         }
     }
+  }
+
+  private formatarParaInput(dateStr: string | Date): string {
+    const date = new Date(dateStr);
+    return new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
   }
 
   onCancel(): void {
