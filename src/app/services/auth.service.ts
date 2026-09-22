@@ -15,11 +15,40 @@ export class AuthService {
   private readonly REDIRECT_URL_KEY = 'redirect_url';
   private platformId = inject(PLATFORM_ID);
 
-  currentUser = signal<string | null>(this.getToken());
-  userName = signal<string | null>(this.getUserName());
-  userProfile = signal<string | null>(this.getUserProfile());
+  currentUser = signal<string | null>(null);
+  userName = signal<string | null>(null);
+  userProfile = signal<string | null>(null);
 
-  constructor(private apiService: ApiService, private router: Router) {}
+  constructor(private apiService: ApiService, private router: Router) {
+    this.checkInitialAuth();
+  }
+
+  private checkInitialAuth() {
+    if (isPlatformBrowser(this.platformId)) {
+      const token = this.getToken();
+      if (token) {
+        if (this.isTokenExpired(token)) {
+          this.logout();
+        } else {
+          this.currentUser.set(token);
+          this.userName.set(this.getUserName());
+          this.userProfile.set(this.getUserProfile());
+        }
+      }
+    }
+  }
+
+  isTokenExpired(token: string): boolean {
+    if (!token) return true;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (!payload.exp) return false;
+      const expirationDate = payload.exp * 1000;
+      return Date.now() > expirationDate;
+    } catch (e) {
+      return true;
+    }
+  }
 
   login(request: LoginRequest) {
     return this.apiService.login(request).pipe(
@@ -67,7 +96,8 @@ export class AuthService {
   }
 
   isAuthenticated(): boolean {
-    return !!this.getToken();
+    const token = this.getToken();
+    return !!token && !this.isTokenExpired(token);
   }
 
   getToken(): string | null {

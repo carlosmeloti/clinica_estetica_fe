@@ -11,6 +11,18 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const notificationService = inject(NotificationService);
   const token = authService.getToken();
 
+  // Se o token estiver expirado localmente, nem envia a request e desloga
+  if (token && authService.isTokenExpired(token)) {
+    authService.logout();
+    const currentUrl = router.url;
+    if (!currentUrl.includes('/login')) {
+      authService.setRedirectUrl(currentUrl);
+      router.navigate(['/login'], { queryParams: { expired: 'true' } });
+      notificationService.showError('Sua sessão expirou. Por favor, faça login novamente.');
+    }
+    return throwError(() => new Error('JWT Expired'));
+  }
+
   let authReq = req;
   if (token) {
     authReq = req.clone({
