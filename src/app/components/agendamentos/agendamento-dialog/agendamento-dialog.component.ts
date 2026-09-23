@@ -13,7 +13,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ApiService } from '../../../services/api.service';
-import { Paciente, Procedimento, Agendamento, UsuarioResponse } from '../../../models/api.models';
+import { Paciente, Procedimento, AgendamentoRequest, UsuarioResponse } from '../../../models/api.models';
 import { Observable, of, debounceTime, distinctUntilChanged, switchMap, tap, finalize, catchError, filter, startWith } from 'rxjs';
 
 @Component({
@@ -152,8 +152,8 @@ import { Observable, of, debounceTime, distinctUntilChanged, switchMap, tap, fin
             <mat-form-field appearance="outline" class="col-6">
               <mat-label>Profissional</mat-label>
               <mat-select formControlName="profissionalId" required>
-                @for (u of profissionais$ | async; track u.login) {
-                  <mat-option [value]="u.id || u.login">{{ u.nome }} {{ u.registroProfissional ? '(' + u.registroProfissional + ')' : '' }}</mat-option>
+                @for (u of profissionais$ | async; track u.id) {
+                  <mat-option [value]="u.id">{{ u.nome }} {{ u.registroProfissional ? '(' + u.registroProfissional + ')' : '' }}</mat-option>
                 }
               </mat-select>
               <mat-icon matPrefix>person_outline</mat-icon>
@@ -573,7 +573,10 @@ export class AgendamentoDialogComponent implements OnInit {
   validarDataFutura(control: any) {
     if (!control.value) return null;
     const data = new Date(control.value);
-    return data < new Date() ? { dataPassada: true } : null;
+    const inicioHoje = new Date();
+    inicioHoje.setHours(0, 0, 0, 0);
+    // Permite qualquer horário de hoje em diante (evita travar o botão Agendar)
+    return data < inicioHoje ? { dataPassada: true } : null;
   }
 
   validarPeriodo(group: FormGroup) {
@@ -632,7 +635,7 @@ export class AgendamentoDialogComponent implements OnInit {
     this.profissionais$ = new Observable(obs => {
       this.apiService.listarUsuarios().subscribe({
         next: res => {
-          const lista = res.filter((u: UsuarioResponse) => u.perfil === 'PROFISSIONAL');
+          const lista = res.filter((u: UsuarioResponse) => u.perfil === 'PROFISSIONAL' && u.id != null);
           obs.next(lista);
           obs.complete();
         },
@@ -645,23 +648,32 @@ export class AgendamentoDialogComponent implements OnInit {
 
     if (this.data) {
         if (this.data.agendamento) {
-            // Se for edição
             const ag = this.data.agendamento;
+            const pacienteId = ag.pacienteId ?? ag.paciente?.id ?? null;
+            const profissionalId = ag.profissionalId ?? ag.profissional?.id ?? null;
+            const procedimentosIds = ag.procedimentosIds
+              ?? (ag.procedimentos || []).map((p: Procedimento) => p.id).filter((id: number | undefined) => id != null);
+
             this.agendamentoForm.patchValue({
-              ...ag,
+              pacienteId,
+              profissionalId,
+              procedimentosIds,
+              motivoConsulta: ag.motivoConsulta || '',
+              status: ag.status || 'AGENDADO',
               dataHoraInicio: this.formatarParaInput(ag.dataHoraInicio),
               dataHoraFim: this.formatarParaInput(ag.dataHoraFim)
             });
 
-            // Carregar dados do paciente para o autocomplete
-            if (ag.pacienteId) {
-              this.apiService.buscarPaciente(ag.pacienteId).subscribe(paciente => {
+            if (ag.paciente) {
+              this.pacienteSelecionado.set(ag.paciente);
+              this.pacienteSearchControl.setValue(ag.paciente as any, { emitEvent: false });
+            } else if (pacienteId) {
+              this.apiService.buscarPaciente(pacienteId).subscribe(paciente => {
                 this.pacienteSelecionado.set(paciente);
                 this.pacienteSearchControl.setValue(paciente as any, { emitEvent: false });
               });
             }
         } else if (this.data.data) {
-            // Se veio uma data do calendário (novo)
             const date = new Date(this.data.data);
             const isoString = this.formatarParaInput(date);
             const endIsoString = this.formatarParaInput(new Date(date.getTime() + 60 * 60000));
@@ -683,6 +695,7 @@ export class AgendamentoDialogComponent implements OnInit {
     const paciente = event.option.value as Paciente;
     this.pacienteSelecionado.set(paciente);
     this.agendamentoForm.get('pacienteId')?.setValue(paciente.id);
+    this.agendamentoForm.get('pacienteId')?.markAsTouched();
     this.autocompletePacientesAberto.set(false);
   }
 
@@ -698,27 +711,43 @@ export class AgendamentoDialogComponent implements OnInit {
     return new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
   }
 
+  private paraIsoDateTime(valor: string): string {
+    if (!valor) return valor;
+    const comSegundos = valor.length === 16 ? `${valor}:00` : valor;
+    return new Date(comSegundos).toISOString();
+  }
+
   onCancel(): void {
     this.dialogRef.close();
   }
 
   onSave(): void {
-    if (this.agendamentoForm.valid) {
-      this.isSaving.set(true);
-      const formValue = this.agendamentoForm.value;
-      if (!formValue.dataHoraFim) {
-          // Definir 1 hora depois se estiver vazio
-          const start = new Date(formValue.dataHoraInicio);
-          const end = new Date(start.getTime() + 60 * 60000);
-          formValue.dataHoraFim = new Date(end.getTime() - (end.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
-      }
-
-      // Simular um pequeno delay para mostrar o estado de carregamento,
-      // ou apenas fechar se a regra for síncrona no componente pai
-      setTimeout(() => {
-        this.dialogRef.close(formValue);
-        this.isSaving.set(false);
-      }, 600);
+    if (this.agendamentoForm.invalid) {
+      this.agendamentoForm.markAllAsTouched();
+      return;
     }
+
+    this.isSaving.set(true);
+    const formValue = this.agendamentoForm.getRawValue();
+
+    let dataHoraFim = formValue.dataHoraFim;
+    if (!dataHoraFim) {
+      const start = new Date(formValue.dataHoraInicio);
+      dataHoraFim = this.formatarParaInput(new Date(start.getTime() + 60 * 60000));
+    }
+
+    const procedimentosIds: number[] = formValue.procedimentosIds || [];
+    const payload: AgendamentoRequest = {
+      pacienteId: Number(formValue.pacienteId),
+      profissionalId: Number(formValue.profissionalId),
+      procedimentos: procedimentosIds.map(id => ({ id, nome: '' })),
+      dataHoraInicio: this.paraIsoDateTime(formValue.dataHoraInicio),
+      dataHoraFim: this.paraIsoDateTime(dataHoraFim),
+      motivoConsulta: formValue.motivoConsulta || undefined,
+      status: formValue.status || 'AGENDADO'
+    };
+
+    this.dialogRef.close(payload);
+    this.isSaving.set(false);
   }
 }

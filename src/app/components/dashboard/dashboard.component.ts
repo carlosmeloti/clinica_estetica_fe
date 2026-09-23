@@ -37,7 +37,7 @@ export class DashboardComponent implements OnInit {
 
   carregarResumo(): void {
     this.apiService.listarPacientes(0, 1).subscribe(p => this.stats[0].value = p.totalElements.toString());
-    this.apiService.listarAgendamentos().subscribe(a => this.stats[1].value = a.length.toString());
+    this.apiService.listarTodosAgendamentos().subscribe(a => this.stats[1].value = a.length.toString());
     this.apiService.listarProcedimentos().subscribe(pr => this.stats[2].value = pr.length.toString());
     this.apiService.listarInsumos().subscribe(i => {
       const alerta = i.filter(ins => (ins.quantidadeEstoque || 0) < 10).length;

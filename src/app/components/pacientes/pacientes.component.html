@@ -242,7 +242,7 @@
                </div>
                <div class="ag-info">
                  <span class="horario">{{ ag.dataHoraInicio | date:'HH:mm' }}</span>
-                 <span class="procs">{{ getProcedimentosNomes(ag.procedimentosIds) }}</span>
+                 <span class="procs">{{ getProcedimentosNomes(ag.procedimentosIds || []) }}</span>
                  <span [class]="'status-pill ' + ag.status">{{ ag.status }}</span>
                </div>
                <div class="ag-actions">

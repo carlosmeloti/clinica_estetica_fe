@@ -105,14 +105,17 @@ export class AtendimentoComponent implements OnInit {
         } else {
           // Preenche procedimentos realizados com os previstos inicialmente
           this.atendimentoForm.patchValue({
-            procedimentosRealizadosIds: this.agendamento.procedimentosIds
+            procedimentosRealizadosIds: this.agendamento.procedimentosIds || []
           });
         }
 
-        this.apiService.buscarPaciente(this.agendamento.pacienteId).subscribe({
-          next: p => this.paciente = p,
-          error: err => console.error('Erro ao buscar dados do paciente', err)
-        });
+        const pacienteId = this.agendamento.pacienteId ?? this.agendamento.paciente?.id;
+        if (pacienteId != null) {
+          this.apiService.buscarPaciente(pacienteId).subscribe({
+            next: p => this.paciente = p,
+            error: err => console.error('Erro ao buscar dados do paciente', err)
+          });
+        }
         this.loading = false;
       },
       error: (err) => {

@@ -73,11 +73,27 @@ export interface Insumo {
   quantidadeUsada?: number;
 }
 
-export interface Agendamento {
+export interface AgendamentoRequest {
   id?: number;
   pacienteId: number;
   profissionalId: number;
-  procedimentosIds: number[];
+  procedimentos: Procedimento[];
+  dataHoraInicio: string;
+  dataHoraFim: string;
+  status?: 'AGENDADO' | 'CONFIRMADO' | 'EM_ATENDIMENTO' | 'CONCLUIDO' | 'CANCELADO' | 'NAO_COMPARECEU';
+  motivoConsulta?: string;
+  valorPrevisto?: number;
+}
+
+/** Resposta do Swagger (+ campos derivados para uso no front) */
+export interface Agendamento {
+  id?: number;
+  pacienteId?: number;
+  profissionalId?: number;
+  procedimentosIds?: number[];
+  paciente?: Paciente;
+  profissional?: UsuarioResponse;
+  procedimentos?: Procedimento[];
   dataHoraInicio: string;
   dataHoraFim: string;
   status?: 'AGENDADO' | 'CONFIRMADO' | 'EM_ATENDIMENTO' | 'CONCLUIDO' | 'CANCELADO' | 'NAO_COMPARECEU';

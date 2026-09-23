@@ -82,7 +82,7 @@ export class AgendamentosComponent implements OnInit {
   carregarDados(): void {
     this.loading.set(true);
     forkJoin({
-      agendamentos: this.apiService.listarAgendamentos(),
+      agendamentos: this.apiService.listarTodosAgendamentos(),
       pacientes: this.apiService.listarPacientes(0, 1000),
       procedimentos: this.apiService.listarProcedimentos()
     }).subscribe({
@@ -103,6 +103,7 @@ export class AgendamentosComponent implements OnInit {
       error: (err) => {
         this.loading.set(false);
         console.error('Erro ao carregar dados da agenda', err);
+        this.notificationService.showError('Não foi possível carregar os agendamentos. Verifique o backend (listar-todos).');
       }
     });
   }
@@ -113,15 +114,22 @@ export class AgendamentosComponent implements OnInit {
   }
 
   atualizarEventosCalendario(): void {
-    const eventos = this.agendamentos().map(a => ({
-      id: a.id?.toString(),
-      title: `${this.getPacienteNome(a.pacienteId)} - ${this.getProcedimentosNomes(a.procedimentosIds)}`,
-      start: a.dataHoraInicio,
-      end: a.dataHoraFim,
-      extendedProps: { ...a },
-      backgroundColor: this.getStatusColor(a.status),
-      borderColor: this.getStatusColor(a.status)
-    }));
+    const eventos = this.agendamentos().map(a => {
+      const pacienteNome = a.paciente?.nome
+        || this.getPacienteNome(a.pacienteId!)
+        || `Paciente ${a.pacienteId}`;
+      const procs = a.procedimentos?.map(p => p.nome).filter(Boolean).join(', ')
+        || this.getProcedimentosNomes(a.procedimentosIds || []);
+      return {
+        id: a.id?.toString(),
+        title: `${pacienteNome} - ${procs}`,
+        start: a.dataHoraInicio,
+        end: a.dataHoraFim,
+        extendedProps: { ...a },
+        backgroundColor: this.getStatusColor(a.status),
+        borderColor: this.getStatusColor(a.status)
+      };
+    });
 
     this.calendarOptions.update(options => ({
       ...options,
@@ -178,19 +186,27 @@ export class AgendamentosComponent implements OnInit {
     const agendamento = event.extendedProps as Agendamento;
     if (agendamento.id) {
       this.loading.set(true);
-      const novosDados = {
-        ...agendamento,
+      const procedimentos = agendamento.procedimentos?.length
+        ? agendamento.procedimentos
+        : (agendamento.procedimentosIds || []).map(id => ({ id, nome: '' }));
+      const payload = {
+        pacienteId: agendamento.pacienteId ?? agendamento.paciente?.id!,
+        profissionalId: agendamento.profissionalId ?? agendamento.profissional?.id!,
+        procedimentos,
         dataHoraInicio: event.start.toISOString(),
-        dataHoraFim: event.end?.toISOString() || event.start.toISOString()
+        dataHoraFim: event.end?.toISOString() || event.start.toISOString(),
+        status: agendamento.status,
+        motivoConsulta: agendamento.motivoConsulta,
+        valorPrevisto: agendamento.valorPrevisto
       };
-      this.apiService.atualizarAgendamento(agendamento.id, novosDados).subscribe({
+      this.apiService.atualizarAgendamento(agendamento.id, payload).subscribe({
         next: () => {
           this.carregarDados();
           this.notificationService.showSuccess('Horário atualizado com sucesso!');
         },
         error: () => {
           this.loading.set(false);
-          this.carregarDados(); // Reverte visualmente
+          this.carregarDados();
         }
       });
     }
@@ -215,9 +231,19 @@ export class AgendamentosComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.apiService.criarAgendamento(result).subscribe({
-          next: () => {
-            this.carregarDados();
+          next: (criado) => {
             this.notificationService.showSuccess('Agendamento criado com sucesso!');
+            this.carregarDados();
+            // Garante exibição imediata se a listagem ainda falhar no backend
+            if (criado?.id != null) {
+              setTimeout(() => {
+                const atual = this.agendamentos();
+                if (!atual.some(a => a.id === criado.id)) {
+                  this.agendamentos.set([...atual, criado]);
+                  this.atualizarEventosCalendario();
+                }
+              }, 800);
+            }
           },
           error: (err) => {
             console.error('Erro ao criar agendamento', err);

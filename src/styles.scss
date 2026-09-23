@@ -5,25 +5,42 @@ html {
   @include mat.theme((
     color: (
       theme-type: light,
-      primary: mat.$rose-palette,
-      tertiary: mat.$red-palette,
+      primary: mat.$azure-palette,
+      tertiary: mat.$blue-palette,
     ),
     typography: Roboto,
     density: 0,
   ));
 
-  /* Alinha o tema Material à identidade da clínica */
+  /* Identidade da clínica + superfícies neutras (sem rosa do theme) */
   & {
     --mat-sys-primary: #A97C6E;
     --mat-sys-on-primary: #ffffff;
     --mat-sys-primary-container: #F3E6E1;
     --mat-sys-on-primary-container: #5C4037;
+    --mat-sys-secondary: #A97C6E;
+    --mat-sys-on-secondary: #ffffff;
+    --mat-sys-secondary-container: #F3E6E1;
+    --mat-sys-on-secondary-container: #5C4037;
     --mat-sys-on-surface: #5C4037;
     --mat-sys-on-surface-variant: #6B5348;
     --mat-sys-outline: #C5A89E;
     --mat-sys-outline-variant: #E5D5CE;
-    --mat-sys-surface: #ffffff;
     --mat-sys-background: #FBF9F6;
+    --mat-sys-on-background: #5C4037;
+    --mat-sys-surface: #ffffff;
+    --mat-sys-surface-dim: #FBF9F6;
+    --mat-sys-surface-bright: #ffffff;
+    --mat-sys-surface-container-lowest: #ffffff;
+    --mat-sys-surface-container-low: #ffffff;
+    --mat-sys-surface-container: #ffffff;
+    --mat-sys-surface-container-high: #ffffff;
+    --mat-sys-surface-container-highest: #ffffff;
+    --mat-sys-surface-variant: #FBF9F6;
+    --mat-sys-surface-tint: #A97C6E;
+    --mat-sys-inverse-surface: #5C4037;
+    --mat-sys-inverse-on-surface: #FBF9F6;
+    --mat-sys-inverse-primary: #F3E6E1;
   }
 }
 
@@ -52,6 +69,7 @@ body {
 
 .content-container {
   padding: 24px;
+  background-color: #FBF9F6;
 }
 
 .mat-mdc-card {
@@ -59,6 +77,15 @@ body {
   border-radius: 12px !important;
   box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
   overflow: hidden;
+  background-color: #ffffff !important;
+  --mdc-elevated-card-container-color: #ffffff;
+  --mdc-outlined-card-container-color: #ffffff;
+}
+
+.mat-mdc-tab-group,
+.mat-mdc-tab-body-content,
+.mat-drawer-content {
+  background-color: #FBF9F6 !important;
 }
 
 .full-width-table {

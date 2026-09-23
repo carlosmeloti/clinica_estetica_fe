@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, map, catchError, of, forkJoin } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
   Paciente,
   Page,
   Agendamento,
+  AgendamentoRequest,
   Procedimento,
   Insumo,
   LocalAplicacao,
@@ -67,29 +68,62 @@ export class ApiService {
     return this.http.delete<void>(`${this.baseUrl}/paciente/deletar/${id}`);
   }
 
-  // Agendamentos
-  listarAgendamentos(data?: string, profissionalId?: number): Observable<Agendamento[]> {
-    let params = new HttpParams();
-    if (data) params = params.set('data', data);
-    if (profissionalId) params = params.set('profissionalId', profissionalId);
-    return this.http.get<Agendamento[]>(`${this.baseUrl}/agendamento/listar-dia-profissional`, { params });
+  // Agendamentos — alinhado ao Swagger
+  listarAgendamentos(data: string, profissionalId: number): Observable<Agendamento[]> {
+    const params = new HttpParams()
+      .set('data', data)
+      .set('profissionalId', profissionalId);
+    return this.http.get<Agendamento[]>(`${this.baseUrl}/agendamento/listar-dia-profissional`, { params }).pipe(
+      map(lista => (lista || []).map(a => this.normalizarAgendamento(a)))
+    );
   }
 
   listarAgendamentosPorStatus(status: string): Observable<Agendamento[]> {
     const params = new HttpParams().set('status', status);
-    return this.http.get<Agendamento[]>(`${this.baseUrl}/agendamento/listar-por-status`, { params });
+    return this.http.get<Agendamento[]>(`${this.baseUrl}/agendamento/listar-por-status`, { params }).pipe(
+      map(lista => (lista || []).map(a => this.normalizarAgendamento(a)))
+    );
   }
 
-  listarTodosAgendamentos(): Observable<Agendamento[]> {
-    return this.http.get<Agendamento[]>(`${this.baseUrl}/agendamento/listar-todos`);
+  listarTodosAgendamentos(page: number = 0, size: number = 500): Observable<Agendamento[]> {
+    const params = new HttpParams()
+      .set('page', page)
+      .set('size', size);
+    return this.http.get<Page<Agendamento>>(`${this.baseUrl}/agendamento/listar-todos`, { params }).pipe(
+      map(res => (res?.content ?? []).map(a => this.normalizarAgendamento(a))),
+      catchError(err => {
+        console.warn('listar-todos falhou; tentando fallback por status', err);
+        return this.listarAgendamentosPorTodosStatus();
+      })
+    );
   }
 
-  criarAgendamento(agendamento: Agendamento): Observable<Agendamento> {
-    return this.http.post<Agendamento>(`${this.baseUrl}/agendamento/criar`, agendamento);
+  /** Fallback quando listar-todos retorna erro no backend */
+  listarAgendamentosPorTodosStatus(): Observable<Agendamento[]> {
+    const statusList = ['AGENDADO', 'CONFIRMADO', 'EM_ATENDIMENTO', 'CONCLUIDO', 'CANCELADO', 'NAO_COMPARECEU'];
+    return forkJoin(statusList.map(status =>
+      this.listarAgendamentosPorStatus(status).pipe(catchError(() => of([] as Agendamento[])))
+    )).pipe(
+      map(listas => {
+        const mapa = new Map<number, Agendamento>();
+        listas.flat().forEach(a => {
+          if (a.id != null) mapa.set(a.id, a);
+        });
+        return Array.from(mapa.values());
+      })
+    );
   }
 
-  atualizarAgendamento(id: number, agendamento: Agendamento): Observable<Agendamento> {
-    return this.http.patch<Agendamento>(`${this.baseUrl}/agendamento/atualizar/${id}`, agendamento);
+  criarAgendamento(agendamento: AgendamentoRequest): Observable<Agendamento> {
+    return this.http.post<Agendamento>(`${this.baseUrl}/agendamento/criar`, agendamento).pipe(
+      map(a => this.normalizarAgendamento(a))
+    );
+  }
+
+  atualizarAgendamento(id: number, agendamento: AgendamentoRequest): Observable<Agendamento> {
+    return this.http.patch<Agendamento>(`${this.baseUrl}/agendamento/atualizar/${id}`, agendamento).pipe(
+      map(a => this.normalizarAgendamento(a))
+    );
   }
 
   cancelarAgendamento(id: number): Observable<void> {
@@ -106,6 +140,20 @@ export class ApiService {
 
   marcarNaoCompareceu(id: number): Observable<void> {
     return this.http.patch<void>(`${this.baseUrl}/agendamento/${id}/nao-compareceu`, {});
+  }
+
+  /** Converte resposta aninhada do Swagger em campos planos usados pela UI */
+  private normalizarAgendamento(a: Agendamento): Agendamento {
+    const pacienteId = a.pacienteId ?? a.paciente?.id;
+    const profissionalId = a.profissionalId ?? a.profissional?.id;
+    const procedimentosIds = a.procedimentosIds
+      ?? (a.procedimentos || []).map(p => p.id!).filter(id => id != null);
+    return {
+      ...a,
+      pacienteId,
+      profissionalId,
+      procedimentosIds
+    };
   }
 
   // Configurações (Procedimentos, Insumos, Locais)

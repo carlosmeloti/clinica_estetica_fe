@@ -157,20 +157,17 @@ export class AgendamentoDetalhesDialogComponent implements OnInit {
   }
 
   carregarDados() {
-    this.apiService.buscarPaciente(this.agendamento.pacienteId).subscribe(p => this.paciente = p);
+    this.apiService.buscarPaciente(this.agendamento.pacienteId ?? this.agendamento.paciente?.id!).subscribe(p => this.paciente = p);
 
     this.apiService.buscarEvolucaoPorAgendamento(this.agendamento.id!).pipe(
       catchError(() => of(null))
     ).subscribe(ev => this.evolucao = ev || undefined);
 
-    if (this.agendamento.procedimentosIds?.length) {
-      forkJoin(
-        this.agendamento.procedimentosIds.map(id => this.apiService.listarProcedimentos())
-      ).subscribe(res => {
-        // Nota: O backend deveria ter um buscarProcedimento(id).
-        // Como não vi no ApiService, vou filtrar da lista.
-        const listaCompleta = res[0];
-        this.procedimentos = listaCompleta.filter(p => this.agendamento.procedimentosIds.includes(p.id!));
+    if (this.agendamento.procedimentos?.length) {
+      this.procedimentos = this.agendamento.procedimentos;
+    } else if (this.agendamento.procedimentosIds?.length) {
+      this.apiService.listarProcedimentos().subscribe(listaCompleta => {
+        this.procedimentos = listaCompleta.filter(p => this.agendamento.procedimentosIds!.includes(p.id!));
       });
     }
   }
