@@ -1,4 +1,32 @@
 /* You can add global styles to this file, and also import other style files */
+@use '@angular/material' as mat;
+
+html {
+  @include mat.theme((
+    color: (
+      theme-type: light,
+      primary: mat.$rose-palette,
+      tertiary: mat.$red-palette,
+    ),
+    typography: Roboto,
+    density: 0,
+  ));
+
+  /* Alinha o tema Material à identidade da clínica */
+  & {
+    --mat-sys-primary: #A97C6E;
+    --mat-sys-on-primary: #ffffff;
+    --mat-sys-primary-container: #F3E6E1;
+    --mat-sys-on-primary-container: #5C4037;
+    --mat-sys-on-surface: #5C4037;
+    --mat-sys-on-surface-variant: #6B5348;
+    --mat-sys-outline: #C5A89E;
+    --mat-sys-outline-variant: #E5D5CE;
+    --mat-sys-surface: #ffffff;
+    --mat-sys-background: #FBF9F6;
+  }
+}
+
 html, body { height: 100%; }
 body {
   margin: 0;

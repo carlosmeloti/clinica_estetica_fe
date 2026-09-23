@@ -9,7 +9,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
-import { Procedimento, Insumo, LocalAplicacao, UsuarioResponse } from '../../models/api.models';
+import { Procedimento, Insumo, LocalAplicacao, UsuarioResponse, PerfilUsuario } from '../../models/api.models';
 import { NotificationService } from '../../services/notification.service';
 import { ProfissionalDialogComponent } from './profissional-dialog.component';
 
@@ -58,7 +58,7 @@ export class ConfiguracoesComponent implements OnInit {
     this.loadingProfissionais.set(true);
     this.apiService.listarUsuarios().subscribe({
       next: (res) => {
-        this.profissionais = Array.isArray(res) ? res : (res as any)?.content || [];
+        this.profissionais = res;
         this.loadingProfissionais.set(false);
       },
       error: (err) => {
@@ -70,7 +70,10 @@ export class ConfiguracoesComponent implements OnInit {
 
   novoProfissional(): void {
     const dialogRef = this.dialog.open(ProfissionalDialogComponent, {
-      width: '600px'
+      width: '600px',
+      maxWidth: '95vw',
+      panelClass: 'modern-dialog-container',
+      data: { usuario: null }
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -82,7 +85,6 @@ export class ConfiguracoesComponent implements OnInit {
           },
           error: (err) => {
             console.error('Erro ao criar profissional', err);
-            // Notification service handles generic errors, but we could add specific ones here
           }
         });
       }
@@ -92,12 +94,14 @@ export class ConfiguracoesComponent implements OnInit {
   editarProfissional(usuario: UsuarioResponse): void {
     const dialogRef = this.dialog.open(ProfissionalDialogComponent, {
       width: '600px',
+      maxWidth: '95vw',
+      panelClass: 'modern-dialog-container',
       data: { usuario }
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.apiService.atualizarUsuario(usuario.login, result).subscribe({
+      if (result && usuario.id != null) {
+        this.apiService.atualizarUsuario(usuario.id, result).subscribe({
           next: () => {
             this.notificationService.showSuccess('Profissional atualizado com sucesso!');
             this.carregarProfissionais();
@@ -109,8 +113,12 @@ export class ConfiguracoesComponent implements OnInit {
   }
 
   excluirProfissional(usuario: UsuarioResponse): void {
+    if (usuario.id == null) {
+      console.error('Usuário sem id; não é possível excluir.');
+      return;
+    }
     if (confirm(`Tem certeza que deseja excluir o profissional ${usuario.nome}?`)) {
-      this.apiService.deletarUsuario(usuario.login).subscribe({
+      this.apiService.deletarUsuario(usuario.id).subscribe({
         next: () => {
           this.notificationService.showSuccess('Profissional excluído com sucesso!');
           this.carregarProfissionais();
@@ -123,4 +131,14 @@ export class ConfiguracoesComponent implements OnInit {
   novoProcedimento(): void { console.log('Novo proc'); }
   novoInsumo(): void { console.log('Novo insumo'); }
   novoLocal(): void { console.log('Novo local'); }
+
+  rotuloPerfil(perfil: string): string {
+    const labels: Record<PerfilUsuario, string> = {
+      ADMIN: 'Administrador',
+      PROFISSIONAL: 'Profissional',
+      RECEPCAO: 'Recepcionista',
+      FINANCEIRO: 'Gestor Financeiro'
+    };
+    return labels[perfil as PerfilUsuario] ?? perfil;
+  }
 }

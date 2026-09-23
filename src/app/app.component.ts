@@ -46,11 +46,10 @@ export class AppComponent {
     if (!profile) return '';
 
     const profileMap: { [key: string]: string } = {
-      'MEDICO': 'Médico',
       'ADMIN': 'Administrador',
-      'ADMINISTRADOR': 'Administrador',
+      'PROFISSIONAL': 'Profissional',
       'RECEPCAO': 'Recepcionista',
-      'FINANCEIRO': 'Financeiro'
+      'FINANCEIRO': 'Gestor Financeiro'
     };
 
     return profileMap[profile] || profile;

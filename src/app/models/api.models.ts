@@ -21,12 +21,14 @@ export interface Paciente {
   nomeResponsavel?: string;
 }
 
+export type PerfilUsuario = 'ADMIN' | 'PROFISSIONAL' | 'RECEPCAO' | 'FINANCEIRO';
+
 export interface UsuarioRequest {
   login: string;
-  password?: string;
+  senha?: string;
   nome: string;
-  email: string;
-  perfil: 'ADMIN' | 'MEDICO' | 'RECEPCAO' | 'FINANCEIRO';
+  email?: string;
+  perfil: PerfilUsuario;
   registroProfissional?: string;
 }
 

@@ -632,8 +632,7 @@ export class AgendamentoDialogComponent implements OnInit {
     this.profissionais$ = new Observable(obs => {
       this.apiService.listarUsuarios().subscribe({
         next: res => {
-          const lista = (Array.isArray(res) ? res : (res as any)?.content || [])
-            .filter((u: UsuarioResponse) => u.perfil === 'MEDICO');
+          const lista = res.filter((u: UsuarioResponse) => u.perfil === 'PROFISSIONAL');
           obs.next(lista);
           obs.complete();
         },

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
   Paciente,
@@ -166,24 +166,30 @@ export class ApiService {
     return this.http.get<EvolucaoEstetica>(`${this.baseUrl}/atendimentos/${id}`);
   }
 
-  // Usuários
-  listarUsuarios(): Observable<UsuarioResponse[]> {
-    return this.http.get<UsuarioResponse[]>(`${this.baseUrl}/usuarios/listar`);
+  // Usuários — alinhado ao Swagger: /usuarios e /usuarios/{id}
+  listarUsuarios(page: number = 0, size: number = 100, sort: string = 'nome,asc'): Observable<UsuarioResponse[]> {
+    const params = new HttpParams()
+      .set('page', page)
+      .set('size', size)
+      .set('sort', sort);
+    return this.http.get<Page<UsuarioResponse>>(`${this.baseUrl}/usuarios`, { params }).pipe(
+      map(res => res?.content ?? [])
+    );
   }
 
-  buscarUsuarioPorLogin(login: string): Observable<UsuarioResponse> {
-    return this.http.get<UsuarioResponse>(`${this.baseUrl}/usuarios/${login}`);
+  buscarUsuarioPorId(id: number): Observable<UsuarioResponse> {
+    return this.http.get<UsuarioResponse>(`${this.baseUrl}/usuarios/${id}`);
   }
 
   criarUsuario(usuario: UsuarioRequest): Observable<UsuarioResponse> {
-    return this.http.post<UsuarioResponse>(`${this.baseUrl}/usuarios/criar`, usuario);
+    return this.http.post<UsuarioResponse>(`${this.baseUrl}/usuarios`, usuario);
   }
 
-  atualizarUsuario(login: string, usuario: UsuarioRequest): Observable<UsuarioResponse> {
-    return this.http.put<UsuarioResponse>(`${this.baseUrl}/usuarios/atualizar/${login}`, usuario);
+  atualizarUsuario(id: number, usuario: UsuarioRequest): Observable<UsuarioResponse> {
+    return this.http.put<UsuarioResponse>(`${this.baseUrl}/usuarios/${id}`, usuario);
   }
 
-  deletarUsuario(login: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/usuarios/deletar/${login}`);
+  deletarUsuario(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/usuarios/${id}`);
   }
 }
