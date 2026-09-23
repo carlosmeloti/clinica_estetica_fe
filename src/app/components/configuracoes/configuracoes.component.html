@@ -50,4 +50,52 @@
       </mat-card-content>
     </mat-card>
   </mat-tab>
+
+  <mat-tab label="Profissionais" *ngIf="authService.userProfile() === 'ADMIN'">
+    <mat-card>
+      <mat-card-header>
+        <button mat-button color="primary" (click)="novoProfissional()">
+          <mat-icon>add</mat-icon> Adicionar Profissional
+        </button>
+      </mat-card-header>
+      <mat-card-content>
+        <table mat-table [dataSource]="profissionais" class="full-width-table">
+          <ng-container matColumnDef="nome">
+            <th mat-header-cell *matHeaderCellDef>Nome</th>
+            <td mat-cell *matCellDef="let row">{{row.nome}}</td>
+          </ng-container>
+          <ng-container matColumnDef="login">
+            <th mat-header-cell *matHeaderCellDef>Login</th>
+            <td mat-cell *matCellDef="let row">{{row.login}}</td>
+          </ng-container>
+          <ng-container matColumnDef="perfil">
+            <th mat-header-cell *matHeaderCellDef>Perfil</th>
+            <td mat-cell *matCellDef="let row">{{row.perfil}}</td>
+          </ng-container>
+          <ng-container matColumnDef="registro">
+            <th mat-header-cell *matHeaderCellDef>Registro</th>
+            <td mat-cell *matCellDef="let row">{{row.registroProfissional || '-'}}</td>
+          </ng-container>
+          <ng-container matColumnDef="acoes">
+            <th mat-header-cell *matHeaderCellDef>Ações</th>
+            <td mat-cell *matCellDef="let row">
+              <button mat-icon-button color="primary" (click)="editarProfissional(row)" matTooltip="Editar">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" (click)="excluirProfissional(row)" matTooltip="Excluir">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="['nome', 'login', 'perfil', 'registro', 'acoes']"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['nome', 'login', 'perfil', 'registro', 'acoes'];"></tr>
+        </table>
+
+        <div *ngIf="loadingProfissionais()" class="loading-shade">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </mat-tab>
 </mat-tab-group>

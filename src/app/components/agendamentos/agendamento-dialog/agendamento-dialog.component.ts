@@ -153,7 +153,7 @@ import { Observable, of, debounceTime, distinctUntilChanged, switchMap, tap, fin
               <mat-label>Profissional</mat-label>
               <mat-select formControlName="profissionalId" required>
                 @for (u of profissionais$ | async; track u.login) {
-                  <mat-option [value]="1">{{ u.nome }}</mat-option>
+                  <mat-option [value]="u.id || u.login">{{ u.nome }} {{ u.registroProfissional ? '(' + u.registroProfissional + ')' : '' }}</mat-option>
                 }
               </mat-select>
               <mat-icon matPrefix>person_outline</mat-icon>
@@ -562,7 +562,7 @@ export class AgendamentoDialogComponent implements OnInit {
     this.agendamentoForm = this.fb.group({
       pacienteId: [null, Validators.required],
       procedimentosIds: [[], [Validators.required, Validators.minLength(1)]],
-      profissionalId: [1, Validators.required],
+      profissionalId: [null, Validators.required],
       dataHoraInicio: ['', [Validators.required, this.validarDataFutura]],
       dataHoraFim: ['', Validators.required],
       motivoConsulta: [''],
@@ -632,7 +632,8 @@ export class AgendamentoDialogComponent implements OnInit {
     this.profissionais$ = new Observable(obs => {
       this.apiService.listarUsuarios().subscribe({
         next: res => {
-          const lista = Array.isArray(res) ? res : (res as any)?.content || [];
+          const lista = (Array.isArray(res) ? res : (res as any)?.content || [])
+            .filter((u: UsuarioResponse) => u.perfil === 'MEDICO');
           obs.next(lista);
           obs.complete();
         },

@@ -178,4 +178,12 @@ export class ApiService {
   criarUsuario(usuario: UsuarioRequest): Observable<UsuarioResponse> {
     return this.http.post<UsuarioResponse>(`${this.baseUrl}/usuarios/criar`, usuario);
   }
+
+  atualizarUsuario(login: string, usuario: UsuarioRequest): Observable<UsuarioResponse> {
+    return this.http.put<UsuarioResponse>(`${this.baseUrl}/usuarios/atualizar/${login}`, usuario);
+  }
+
+  deletarUsuario(login: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/usuarios/deletar/${login}`);
+  }
 }
