@@ -151,6 +151,27 @@ export class ConfiguracoesComponent implements OnInit {
     });
   }
 
+  editarProcedimento(procedimento: Procedimento): void {
+    const dialogRef = this.dialog.open(ProcedimentoDialogComponent, {
+      width: '520px',
+      maxWidth: '95vw',
+      panelClass: 'modern-dialog-container',
+      data: { procedimento }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && procedimento.id != null) {
+        this.apiService.atualizarProcedimento(procedimento.id, result).subscribe({
+          next: () => {
+            this.notificationService.showSuccess('Procedimento atualizado com sucesso!');
+            this.apiService.listarProcedimentos().subscribe(p => this.procedimentos = p);
+          },
+          error: (err) => console.error('Erro ao atualizar procedimento', err)
+        });
+      }
+    });
+  }
+
   novoInsumo(): void {
     const dialogRef = this.dialog.open(InsumoDialogComponent, {
       width: '520px',

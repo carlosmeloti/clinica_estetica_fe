@@ -185,7 +185,13 @@ export class AtendimentoComponent implements OnInit {
           next: () => {
             this.finalizando = false;
             this.notificationService.showSuccess('Atendimento finalizado com sucesso!');
-            this.router.navigate(['/agendamentos']);
+            if (confirm('Ir para o caixa para receber o pagamento?')) {
+              this.router.navigate(['/caixa'], {
+                queryParams: { agendamentoId: this.agendamentoId, tab: 'pendentes' }
+              });
+            } else {
+              this.router.navigate(['/agendamentos']);
+            }
           },
           error: () => {
             this.finalizando = false;
@@ -202,5 +208,11 @@ export class AtendimentoComponent implements OnInit {
 
   voltar(): void {
     this.router.navigate(['/agendamentos']);
+  }
+
+  irParaCaixa(): void {
+    this.router.navigate(['/caixa'], {
+      queryParams: { agendamentoId: this.agendamentoId, tab: 'pendentes' }
+    });
   }
 }

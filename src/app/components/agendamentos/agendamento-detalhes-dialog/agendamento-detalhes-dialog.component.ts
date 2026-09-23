@@ -75,6 +75,10 @@ import { Router } from '@angular/router';
           Ver Atendimento
         </button>
 
+        <button mat-raised-button class="btn-caixa" *ngIf="podeReceber()" (click)="irParaCaixa()">
+          <mat-icon>payments</mat-icon> Receber / Caixa
+        </button>
+
         <button mat-stroked-button color="warn" *ngIf="podeCancelar()" (click)="cancelar()">
           Cancelar
         </button>
@@ -129,6 +133,10 @@ import { Router } from '@angular/router';
     .btn-concluir {
       border-color: #4caf50 !important;
       color: #4caf50 !important;
+    }
+    .btn-caixa {
+      background: #A97C6E !important;
+      color: #fff !important;
     }
   `]
 })
@@ -189,6 +197,11 @@ export class AgendamentoDetalhesDialogComponent implements OnInit {
   podeCancelar() { return !['CONCLUIDO', 'CANCELADO'].includes(this.agendamento.status!); }
   podeMarcarFalta() { return ['AGENDADO', 'CONFIRMADO'].includes(this.agendamento.status!); }
 
+  podeReceber() {
+    return !['CANCELADO', 'NAO_COMPARECEU'].includes(this.agendamento.status!)
+      && this.agendamento.id != null;
+  }
+
   confirmar() {
     this.loading = true;
     this.apiService.confirmarAgendamento(this.agendamento.id!).subscribe({
@@ -204,6 +217,13 @@ export class AgendamentoDetalhesDialogComponent implements OnInit {
   irParaAtendimento() {
     this.dialogRef.close();
     this.router.navigate(['/agendamentos', this.agendamento.id, 'atendimento']);
+  }
+
+  irParaCaixa() {
+    this.dialogRef.close();
+    this.router.navigate(['/caixa'], {
+      queryParams: { agendamentoId: this.agendamento.id, tab: 'pendentes' }
+    });
   }
 
   cancelar() {

@@ -64,6 +64,7 @@ export interface TokenResponse {
 export interface Procedimento {
   id?: number;
   nome: string;
+  /** Obrigatório no create/update de configs (>= 0) */
   precoSugerido?: number;
   duracaoMinutos?: number;
 }
@@ -152,4 +153,111 @@ export interface ErroResponse {
   mensagem: string;
   path: string;
   campos?: { [key: string]: string };
+}
+
+// ——— Caixa / Financeiro ———
+
+export type FormaPagamento =
+  | 'DINHEIRO'
+  | 'PIX'
+  | 'CARTAO_DEBITO'
+  | 'CARTAO_CREDITO'
+  | 'TRANSFERENCIA'
+  | 'OUTRO';
+
+export type StatusPagamento = 'PENDENTE' | 'PAGO' | 'PARCIAL' | 'ESTORNADO';
+
+export interface ItemPagamentoRequest {
+  procedimentoId?: number;
+  descricao: string;
+  valorUnitario: number;
+  quantidade: number;
+}
+
+export interface PagamentoRequest {
+  agendamentoId: number;
+  valorPago: number;
+  formaPagamento: FormaPagamento;
+  desconto?: number;
+  valorBruto?: number;
+  dataPagamento?: string;
+  observacao?: string;
+  itens?: ItemPagamentoRequest[];
+}
+
+export interface ItemPagamentoResponse {
+  procedimentoId?: number;
+  descricao: string;
+  valorUnitario: number;
+  quantidade: number;
+  valorTotal?: number;
+}
+
+export interface PagamentoResponse {
+  id: number;
+  agendamentoId?: number;
+  pacienteNome?: string;
+  profissionalNome?: string;
+  valorBruto: number;
+  desconto: number;
+  valorLiquido: number;
+  valorPago: number;
+  formaPagamento: FormaPagamento;
+  status: StatusPagamento;
+  dataPagamento?: string;
+  observacao?: string;
+  itens?: ItemPagamentoResponse[];
+}
+
+export interface SugestaoPagamentoResponse {
+  agendamentoId: number;
+  pacienteNome?: string;
+  profissionalNome?: string;
+  valorSugerido: number;
+  totalPago?: number;
+  saldoEmAberto: number;
+  itensSugeridos?: ItemPagamentoResponse[];
+}
+
+export interface ContaPendenteResponse {
+  agendamentoId: number;
+  pacienteNome: string;
+  profissionalNome?: string;
+  statusAgendamento?: string;
+  valorSugerido: number;
+  totalPago: number;
+  saldoEmAberto: number;
+  dataHoraInicio?: string;
+}
+
+export interface EstornoRequest {
+  motivo?: string;
+}
+
+export interface TotaisPorChave {
+  chave: string;
+  rotulo: string;
+  total: number;
+  quantidade: number;
+}
+
+export interface TotalPorDia {
+  data: string;
+  total: number;
+  quantidade: number;
+}
+
+export interface RelatorioCaixaResponse {
+  totalBruto: number;
+  totalDescontos: number;
+  totalRecebido: number;
+  quantidadePagamentos: number;
+  ticketMedio: number;
+  quantidadeContasPendentes: number;
+  valorPendente: number;
+  porFormaPagamento?: TotaisPorChave[];
+  porProcedimento?: TotaisPorChave[];
+  porProfissional?: TotaisPorChave[];
+  porDia?: TotalPorDia[];
+  lancamentos?: PagamentoResponse[];
 }

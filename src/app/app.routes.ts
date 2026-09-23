@@ -7,6 +7,7 @@ import { LoginComponent } from './components/login/login.component';
 import { authGuard } from './guards/auth.guard';
 
 import { AtendimentoComponent } from './components/atendimentos/atendimento.component';
+import { CaixaComponent } from './components/caixa/caixa.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -29,6 +30,11 @@ export const routes: Routes = [
   {
     path: 'agendamentos/:id/atendimento',
     component: AtendimentoComponent,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'caixa',
+    component: CaixaComponent,
     canActivate: [authGuard]
   },
   {

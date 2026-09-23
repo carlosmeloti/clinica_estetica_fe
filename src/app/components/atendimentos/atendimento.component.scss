@@ -23,7 +23,14 @@
 
     .actions {
       display: flex;
-      gap: 12px;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+
+      .btn-caixa {
+        border-color: #A97C6E !important;
+        color: #A97C6E !important;
+      }
     }
   }
 

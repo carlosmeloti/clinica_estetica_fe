@@ -76,6 +76,7 @@ export class AppComponent {
     { path: '/dashboard', label: 'Dashboard' },
     { path: '/pacientes', label: 'Pacientes' },
     { path: '/agendamentos', label: 'Agendamentos' },
+    { path: '/caixa', label: 'Caixa' },
     { path: '/configuracoes', label: 'Configurações' }
   ];
 

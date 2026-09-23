@@ -13,6 +13,12 @@
       <button mat-flat-button color="primary" (click)="finalizar()" [disabled]="loading || finalizando || evolucao?.finalizado">
         Finalizar Atendimento
       </button>
+      <button mat-stroked-button class="btn-caixa" *ngIf="agendamento?.id"
+              (click)="irParaCaixa()"
+              [disabled]="loading">
+        <mat-icon>payments</mat-icon>
+        Ir para caixa
+      </button>
     </div>
   </header>
 

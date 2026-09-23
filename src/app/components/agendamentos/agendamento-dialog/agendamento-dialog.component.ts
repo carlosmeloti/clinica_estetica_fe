@@ -14,7 +14,8 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ApiService } from '../../../services/api.service';
 import { Paciente, Procedimento, AgendamentoRequest, Profissional } from '../../../models/api.models';
-import { Observable, of, debounceTime, distinctUntilChanged, switchMap, tap, finalize, catchError, filter, startWith } from 'rxjs';
+import { Observable, of, debounceTime, distinctUntilChanged, switchMap, tap, catchError, startWith } from 'rxjs';
+import { formatarMoeda } from '../../../utils/financeiro.utils';
 
 @Component({
   selector: 'app-agendamento-dialog',
@@ -165,8 +166,10 @@ import { Observable, of, debounceTime, distinctUntilChanged, switchMap, tap, fin
             <mat-form-field appearance="outline" class="col-6">
               <mat-label>Procedimentos</mat-label>
               <mat-select formControlName="procedimentosIds" multiple required>
-                @for (pr of procedimentos$ | async; track pr.id) {
-                  <mat-option [value]="pr.id">{{ pr.nome }}</mat-option>
+                @for (pr of procedimentosLista(); track pr.id) {
+                  <mat-option [value]="pr.id">
+                    {{ pr.nome }} — {{ formatarPreco(pr.precoSugerido) }}
+                  </mat-option>
                 }
               </mat-select>
               <mat-icon matPrefix>format_list_bulleted</mat-icon>
@@ -175,6 +178,14 @@ import { Observable, of, debounceTime, distinctUntilChanged, switchMap, tap, fin
               }
             </mat-form-field>
           </div>
+
+          @if (valorPrevistoTotal() > 0) {
+            <div class="valor-previsto-box">
+              <mat-icon>payments</mat-icon>
+              <span>Valor previsto: <strong>{{ formatarPreco(valorPrevistoTotal()) }}</strong></span>
+              <span class="valor-hint">(soma dos procedimentos)</span>
+            </div>
+          }
         </div>
 
         <mat-divider></mat-divider>
@@ -424,6 +435,27 @@ import { Observable, of, debounceTime, distinctUntilChanged, switchMap, tap, fin
       margin-top: -8px;
     }
 
+    .valor-previsto-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background-color: rgba(169, 124, 110, 0.1);
+      border-radius: 8px;
+      color: #5C4037;
+      font-size: 14px;
+    }
+
+    .valor-previsto-box mat-icon {
+      color: #A97C6E;
+    }
+
+    .valor-hint {
+      color: #888;
+      font-size: 12px;
+      margin-left: 4px;
+    }
+
     .duration-indicator mat-icon {
       font-size: 18px;
       width: 18px;
@@ -554,6 +586,19 @@ export class AgendamentoDialogComponent implements OnInit {
 
   procedimentos$!: Observable<Procedimento[]>;
   profissionais$!: Observable<Profissional[]>;
+  procedimentosLista = signal<Procedimento[]>([]);
+  procedimentosIdsSelecionados = signal<number[]>([]);
+
+  valorPrevistoTotal = computed(() => {
+    const ids = this.procedimentosIdsSelecionados();
+    const lista = this.procedimentosLista();
+    return ids.reduce((sum, id) => {
+      const p = lista.find(x => x.id === id);
+      return sum + Number(p?.precoSugerido ?? 0);
+    }, 0);
+  });
+
+  formatarPreco = formatarMoeda;
 
   constructor(
     public dialogRef: MatDialogRef<AgendamentoDialogComponent>,
@@ -622,6 +667,7 @@ export class AgendamentoDialogComponent implements OnInit {
       this.apiService.listarProcedimentos().subscribe({
         next: res => {
           const lista = Array.isArray(res) ? res : (res as any)?.content || [];
+          this.procedimentosLista.set(lista);
           obs.next(lista);
           obs.complete();
         },
@@ -631,6 +677,13 @@ export class AgendamentoDialogComponent implements OnInit {
         }
       });
     });
+    // dispara carga
+    this.procedimentos$.subscribe();
+
+    this.agendamentoForm.get('procedimentosIds')?.valueChanges.subscribe((ids: number[]) => {
+      this.procedimentosIdsSelecionados.set(ids || []);
+    });
+    this.procedimentosIdsSelecionados.set(this.agendamentoForm.get('procedimentosIds')?.value || []);
 
     this.profissionais$ = new Observable(obs => {
       this.apiService.listarProfissionais().subscribe({
@@ -744,11 +797,15 @@ export class AgendamentoDialogComponent implements OnInit {
     const payload: AgendamentoRequest = {
       pacienteId: Number(formValue.pacienteId),
       profissionalId: Number(formValue.profissionalId),
-      procedimentos: procedimentosIds.map(id => ({ id, nome: '' })),
+      procedimentos: procedimentosIds.map(id => {
+        const p = this.procedimentosLista().find(x => x.id === id);
+        return { id, nome: p?.nome || '', precoSugerido: p?.precoSugerido };
+      }),
       dataHoraInicio: this.paraIsoDateTime(formValue.dataHoraInicio),
       dataHoraFim: this.paraIsoDateTime(dataHoraFim),
       motivoConsulta: formValue.motivoConsulta || undefined,
-      status: formValue.status || 'AGENDADO'
+      status: formValue.status || 'AGENDADO',
+      valorPrevisto: this.valorPrevistoTotal()
     };
 
     this.dialogRef.close(payload);

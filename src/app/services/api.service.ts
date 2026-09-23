@@ -15,7 +15,13 @@ import {
   UsuarioResponse,
   Profissional,
   LoginRequest,
-  TokenResponse
+  TokenResponse,
+  PagamentoRequest,
+  PagamentoResponse,
+  SugestaoPagamentoResponse,
+  ContaPendenteResponse,
+  EstornoRequest,
+  RelatorioCaixaResponse
 } from '../models/api.models';
 
 @Injectable({
@@ -203,15 +209,23 @@ export class ApiService {
 
   // Configurações (Procedimentos, Insumos, Locais)
   listarProcedimentos(): Observable<Procedimento[]> {
-    return this.http.get<Procedimento[]>(`${this.baseUrl}/configs/procedimentos/listar`);
+    return this.http
+      .get<Procedimento[]>(`${this.baseUrl}/configs/procedimentos/listar`, { observe: 'response' })
+      .pipe(map(res => (res.status === 204 || !res.body ? [] : res.body)));
   }
 
   criarProcedimento(procedimento: Procedimento): Observable<Procedimento> {
     return this.http.post<Procedimento>(`${this.baseUrl}/configs/procedimentos/criar`, procedimento);
   }
 
+  atualizarProcedimento(id: number, procedimento: Procedimento): Observable<Procedimento> {
+    return this.http.put<Procedimento>(`${this.baseUrl}/configs/procedimentos/atualizar/${id}`, procedimento);
+  }
+
   listarInsumos(): Observable<Insumo[]> {
-    return this.http.get<Insumo[]>(`${this.baseUrl}/configs/insumos/listar`);
+    return this.http
+      .get<Insumo[]>(`${this.baseUrl}/configs/insumos/listar`, { observe: 'response' })
+      .pipe(map(res => (res.status === 204 || !res.body ? [] : res.body)));
   }
 
   criarInsumo(insumo: Insumo): Observable<Insumo> {
@@ -224,6 +238,68 @@ export class ApiService {
 
   criarLocal(local: LocalAplicacao): Observable<LocalAplicacao> {
     return this.http.post<LocalAplicacao>(`${this.baseUrl}/configs/locaisaplicacao/criar`, local);
+  }
+
+  // ——— Caixa ———
+  private listaOuVazia<T>(res: { status: number; body: T[] | null }): T[] {
+    if (res.status === 204 || res.body == null) return [];
+    return Array.isArray(res.body) ? res.body : [];
+  }
+
+  obterSugestaoPagamento(agendamentoId: number): Observable<SugestaoPagamentoResponse> {
+    return this.http.get<SugestaoPagamentoResponse>(`${this.baseUrl}/caixa/sugestao/${agendamentoId}`);
+  }
+
+  registrarPagamento(request: PagamentoRequest): Observable<PagamentoResponse> {
+    return this.http.post<PagamentoResponse>(`${this.baseUrl}/caixa/pagamentos`, request);
+  }
+
+  listarPagamentos(filtros: {
+    dataInicio: string;
+    dataFim: string;
+    profissionalId?: number | null;
+    formaPagamento?: string | null;
+    status?: string | null;
+  }): Observable<PagamentoResponse[]> {
+    let params = new HttpParams()
+      .set('dataInicio', filtros.dataInicio)
+      .set('dataFim', filtros.dataFim);
+    if (filtros.profissionalId != null) params = params.set('profissionalId', filtros.profissionalId);
+    if (filtros.formaPagamento) params = params.set('formaPagamento', filtros.formaPagamento);
+    if (filtros.status) params = params.set('status', filtros.status);
+    return this.http
+      .get<PagamentoResponse[]>(`${this.baseUrl}/caixa/pagamentos`, { params, observe: 'response' })
+      .pipe(map(res => this.listaOuVazia(res)));
+  }
+
+  listarPendentesCaixa(filtros: {
+    dataInicio: string;
+    dataFim: string;
+    profissionalId?: number | null;
+  }): Observable<ContaPendenteResponse[]> {
+    let params = new HttpParams()
+      .set('dataInicio', filtros.dataInicio)
+      .set('dataFim', filtros.dataFim);
+    if (filtros.profissionalId != null) params = params.set('profissionalId', filtros.profissionalId);
+    return this.http
+      .get<ContaPendenteResponse[]>(`${this.baseUrl}/caixa/pendentes`, { params, observe: 'response' })
+      .pipe(map(res => this.listaOuVazia(res)));
+  }
+
+  estornarPagamento(id: number, body?: EstornoRequest): Observable<PagamentoResponse | void> {
+    return this.http.patch<PagamentoResponse | void>(`${this.baseUrl}/caixa/pagamentos/${id}/estornar`, body || {});
+  }
+
+  obterRelatorioCaixa(filtros: {
+    dataInicio: string;
+    dataFim: string;
+    profissionalId?: number | null;
+  }): Observable<RelatorioCaixaResponse> {
+    let params = new HttpParams()
+      .set('dataInicio', filtros.dataInicio)
+      .set('dataFim', filtros.dataFim);
+    if (filtros.profissionalId != null) params = params.set('profissionalId', filtros.profissionalId);
+    return this.http.get<RelatorioCaixaResponse>(`${this.baseUrl}/caixa/relatorios`, { params });
   }
 
   // Evolução Clínica
