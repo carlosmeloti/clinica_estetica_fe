@@ -12,6 +12,8 @@ import { AuthService } from '../../services/auth.service';
 import { Procedimento, Insumo, LocalAplicacao, UsuarioResponse, PerfilUsuario } from '../../models/api.models';
 import { NotificationService } from '../../services/notification.service';
 import { ProfissionalDialogComponent } from './profissional-dialog.component';
+import { ProcedimentoDialogComponent } from './procedimento-dialog.component';
+import { InsumoDialogComponent } from './insumo-dialog.component';
 
 @Component({
   selector: 'app-configuracoes',
@@ -128,8 +130,48 @@ export class ConfiguracoesComponent implements OnInit {
     }
   }
 
-  novoProcedimento(): void { console.log('Novo proc'); }
-  novoInsumo(): void { console.log('Novo insumo'); }
+  novoProcedimento(): void {
+    const dialogRef = this.dialog.open(ProcedimentoDialogComponent, {
+      width: '520px',
+      maxWidth: '95vw',
+      panelClass: 'modern-dialog-container',
+      data: { procedimento: null }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.apiService.criarProcedimento(result).subscribe({
+          next: () => {
+            this.notificationService.showSuccess('Procedimento cadastrado com sucesso!');
+            this.apiService.listarProcedimentos().subscribe(p => this.procedimentos = p);
+          },
+          error: (err) => console.error('Erro ao criar procedimento', err)
+        });
+      }
+    });
+  }
+
+  novoInsumo(): void {
+    const dialogRef = this.dialog.open(InsumoDialogComponent, {
+      width: '520px',
+      maxWidth: '95vw',
+      panelClass: 'modern-dialog-container',
+      data: { insumo: null }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.apiService.criarInsumo(result).subscribe({
+          next: () => {
+            this.notificationService.showSuccess('Insumo cadastrado com sucesso!');
+            this.apiService.listarInsumos().subscribe(i => this.insumos = i);
+          },
+          error: (err) => console.error('Erro ao criar insumo', err)
+        });
+      }
+    });
+  }
+
   novoLocal(): void { console.log('Novo local'); }
 
   rotuloPerfil(perfil: string): string {
