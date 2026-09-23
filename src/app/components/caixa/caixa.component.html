@@ -219,11 +219,6 @@
         </div>
 
         <div class="print-area" *ngIf="relatorio() as rel">
-          <div class="print-header">
-            <h1>Clínica Estética — Relatório de Caixa</h1>
-            <p>Período: {{ formatarDataBr(relDataInicio()) }} a {{ formatarDataBr(relDataFim()) }}</p>
-          </div>
-
           <div class="cards-resumo">
             <div class="card-resumo">
               <span class="label">Recebido</span>
@@ -308,7 +303,7 @@
             </mat-card>
           </div>
 
-          <h3 class="print-only-title">Lançamentos do período</h3>
+          <h3 class="section-title-lanc">Lançamentos do período</h3>
           <table class="print-table">
             <thead>
               <tr>

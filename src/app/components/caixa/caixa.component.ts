@@ -25,6 +25,7 @@ import {
   TotalPorDia
 } from '../../models/api.models';
 import { PagamentoDialogComponent } from './pagamento-dialog.component';
+import { AuthService } from '../../services/auth.service';
 import {
   FORMAS_PAGAMENTO,
   STATUS_PAGAMENTO_LABEL,
@@ -36,6 +37,7 @@ import {
   rangeSemana,
   rotuloFormaPagamento
 } from '../../utils/financeiro.utils';
+import { imprimirRelatorioCaixa } from '../../utils/caixa-relatorio-print';
 
 type PresetRelatorio = 'diario' | 'semanal' | 'mensal' | 'personalizado';
 
@@ -67,6 +69,7 @@ export class CaixaComponent implements OnInit {
   private notification = inject(NotificationService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private auth = inject(AuthService);
 
   formatarMoeda = formatarMoeda;
   formatarDataBr = formatarDataBr;
@@ -250,7 +253,24 @@ export class CaixaComponent implements OnInit {
   }
 
   imprimirRelatorio(): void {
-    window.print();
+    const rel = this.relatorio();
+    if (!rel) {
+      this.notification.showError('Gere o relatório antes de imprimir.');
+      return;
+    }
+    const profissionalId = this.relProfissionalId();
+    const profissionalNome = profissionalId != null
+      ? this.profissionais().find(p => p.id === profissionalId)?.nome
+      : null;
+
+    imprimirRelatorioCaixa({
+      clinicaNome: 'Lene Costa · Clínica Estética',
+      dataInicio: this.relDataInicio(),
+      dataFim: this.relDataFim(),
+      profissionalFiltro: profissionalNome || null,
+      geradoPor: this.auth.userName() || null,
+      relatorio: rel
+    });
   }
 
   barWidth(valor: number, max: number): string {

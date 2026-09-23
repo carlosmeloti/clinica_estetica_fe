@@ -142,6 +142,11 @@
   background: #fff;
 }
 
+.section-title-lanc {
+  margin: 16px 0 8px;
+  color: #5C4037;
+}
+
 .pie-wrap {
   display: flex;
   align-items: center;
@@ -226,15 +231,6 @@
   font-weight: 600;
 }
 
-.print-header {
-  display: none;
-}
-
-.print-only-title {
-  margin: 16px 0 8px;
-  color: #5C4037;
-}
-
 .print-table {
   width: 100%;
   border-collapse: collapse;
@@ -249,35 +245,5 @@
   th {
     background: #FBF9F6;
     color: #5C4037;
-  }
-}
-
-@media print {
-  .no-print {
-    display: none !important;
-  }
-
-  :host ::ng-deep .mat-mdc-tab-header {
-    display: none !important;
-  }
-
-  .print-header {
-    display: block;
-    margin-bottom: 16px;
-
-    h1 { margin: 0 0 4px; font-size: 1.4rem; color: #5C4037; }
-    p { margin: 0; color: #666; }
-  }
-
-  .caixa-page {
-    padding: 0;
-  }
-
-  .charts-grid {
-    break-inside: avoid;
-  }
-
-  .print-table {
-    break-inside: auto;
   }
 }
