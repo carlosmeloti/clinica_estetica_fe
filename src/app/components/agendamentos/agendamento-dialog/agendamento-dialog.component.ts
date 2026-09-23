@@ -13,7 +13,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ApiService } from '../../../services/api.service';
-import { Paciente, Procedimento, AgendamentoRequest, UsuarioResponse } from '../../../models/api.models';
+import { Paciente, Procedimento, AgendamentoRequest, Profissional } from '../../../models/api.models';
 import { Observable, of, debounceTime, distinctUntilChanged, switchMap, tap, finalize, catchError, filter, startWith } from 'rxjs';
 
 @Component({
@@ -553,7 +553,7 @@ export class AgendamentoDialogComponent implements OnInit {
   });
 
   procedimentos$!: Observable<Procedimento[]>;
-  profissionais$!: Observable<UsuarioResponse[]>;
+  profissionais$!: Observable<Profissional[]>;
 
   constructor(
     public dialogRef: MatDialogRef<AgendamentoDialogComponent>,
@@ -633,14 +633,13 @@ export class AgendamentoDialogComponent implements OnInit {
     });
 
     this.profissionais$ = new Observable(obs => {
-      this.apiService.listarUsuarios().subscribe({
+      this.apiService.listarProfissionais().subscribe({
         next: res => {
-          const lista = res.filter((u: UsuarioResponse) => u.perfil === 'PROFISSIONAL' && u.id != null);
-          obs.next(lista);
+          obs.next(Array.isArray(res) ? res : []);
           obs.complete();
         },
         error: err => {
-          console.error('Erro ao carregar usuários', err);
+          console.error('Erro ao carregar profissionais', err);
           obs.error(err);
         }
       });
@@ -673,14 +672,19 @@ export class AgendamentoDialogComponent implements OnInit {
                 this.pacienteSearchControl.setValue(paciente as any, { emitEvent: false });
               });
             }
-        } else if (this.data.data) {
-            const date = new Date(this.data.data);
-            const isoString = this.formatarParaInput(date);
-            const endIsoString = this.formatarParaInput(new Date(date.getTime() + 60 * 60000));
-            this.agendamentoForm.patchValue({
-              dataHoraInicio: isoString,
-              dataHoraFim: endIsoString
-            });
+        } else {
+            if (this.data.data) {
+              const date = new Date(this.data.data);
+              const isoString = this.formatarParaInput(date);
+              const endIsoString = this.formatarParaInput(new Date(date.getTime() + 60 * 60000));
+              this.agendamentoForm.patchValue({
+                dataHoraInicio: isoString,
+                dataHoraFim: endIsoString
+              });
+            }
+            if (this.data.profissionalId != null) {
+              this.agendamentoForm.patchValue({ profissionalId: this.data.profissionalId });
+            }
         }
     }
   }

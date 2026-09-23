@@ -41,6 +41,15 @@ export interface UsuarioResponse {
   registroProfissional?: string;
 }
 
+/** Resposta de GET /api/profissionais */
+export interface Profissional {
+  id: number;
+  nome: string;
+  email: string;
+  login: string;
+  registroProfissional?: string;
+}
+
 export interface LoginRequest {
   login: string;
   password?: string;

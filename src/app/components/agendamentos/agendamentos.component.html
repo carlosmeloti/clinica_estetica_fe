@@ -5,6 +5,32 @@
   </button>
 </div>
 
+<div class="agenda-toolbar">
+  <mat-form-field appearance="outline" class="profissional-select" subscriptSizing="dynamic">
+    <mat-label>Profissional</mat-label>
+    <mat-select
+      [ngModel]="profissionalFiltroId()"
+      (ngModelChange)="onProfissionalChange($event)"
+      placeholder="Todos">
+      <mat-option [value]="null">Todos</mat-option>
+      @for (p of profissionais(); track p.id) {
+        <mat-option [value]="p.id">{{ p.nome }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  @if (legendaProfissionais().length > 0) {
+    <div class="legenda-profissionais" aria-label="Legenda por profissional">
+      @for (item of legendaProfissionais(); track item.id) {
+        <span class="legenda-item">
+          <span class="legenda-cor" [style.background-color]="item.cor"></span>
+          {{ item.nome }}
+        </span>
+      }
+    </div>
+  }
+</div>
+
 <mat-card class="calendar-main-card">
   <mat-card-content>
     <full-calendar [options]="calendarOptions()"></full-calendar>

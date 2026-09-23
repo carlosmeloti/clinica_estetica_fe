@@ -13,6 +13,7 @@ import {
   EvolucaoEstetica,
   UsuarioRequest,
   UsuarioResponse,
+  Profissional,
   LoginRequest,
   TokenResponse
 } from '../models/api.models';
@@ -69,13 +70,43 @@ export class ApiService {
   }
 
   // Agendamentos — alinhado ao Swagger
+  /**
+   * Agenda geral ou por profissional no intervalo visível.
+   * 200 + lista | 204 → [] | 400/404 → ErroResponse (interceptor).
+   */
+  listarAgenda(
+    dataInicio: string,
+    dataFim: string,
+    profissionalId?: number | null,
+    status?: string
+  ): Observable<Agendamento[]> {
+    let params = new HttpParams()
+      .set('dataInicio', dataInicio)
+      .set('dataFim', dataFim);
+    if (profissionalId != null) {
+      params = params.set('profissionalId', profissionalId);
+    }
+    if (status) {
+      params = params.set('status', status);
+    }
+    return this.http
+      .get<Agendamento[]>(`${this.baseUrl}/agendamento/listar-agenda`, {
+        params,
+        observe: 'response'
+      })
+      .pipe(
+        map(res => {
+          if (res.status === 204 || res.body == null) {
+            return [];
+          }
+          return res.body.map(a => this.normalizarAgendamento(a));
+        })
+      );
+  }
+
+  /** @deprecated Preferir listarAgenda(data, data, profissionalId) */
   listarAgendamentos(data: string, profissionalId: number): Observable<Agendamento[]> {
-    const params = new HttpParams()
-      .set('data', data)
-      .set('profissionalId', profissionalId);
-    return this.http.get<Agendamento[]>(`${this.baseUrl}/agendamento/listar-dia-profissional`, { params }).pipe(
-      map(lista => (lista || []).map(a => this.normalizarAgendamento(a)))
-    );
+    return this.listarAgenda(data, data, profissionalId);
   }
 
   listarAgendamentosPorStatus(status: string): Observable<Agendamento[]> {
@@ -96,6 +127,20 @@ export class ApiService {
         return this.listarAgendamentosPorTodosStatus();
       })
     );
+  }
+
+  /** GET /api/profissionais — seletor da agenda e formulários */
+  listarProfissionais(): Observable<Profissional[]> {
+    return this.http
+      .get<Profissional[]>(`${this.baseUrl}/profissionais`, { observe: 'response' })
+      .pipe(
+        map(res => {
+          if (res.status === 204 || res.body == null) {
+            return [];
+          }
+          return Array.isArray(res.body) ? res.body : [];
+        })
+      );
   }
 
   /** Fallback quando listar-todos retorna erro no backend */
