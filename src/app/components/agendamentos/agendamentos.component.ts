@@ -206,8 +206,9 @@ export class AgendamentosComponent implements OnInit {
 
   novoAgendamento(data?: Date): void {
     const dialogRef = this.dialog.open(AgendamentoDialogComponent, {
-      width: '600px',
+      width: '760px',
       maxWidth: '95vw',
+      panelClass: 'modern-dialog-container',
       data: { data: data || this.selectedDate() }
     });
 
@@ -228,8 +229,9 @@ export class AgendamentosComponent implements OnInit {
 
   editarAgendamento(agendamento: Agendamento): void {
     const dialogRef = this.dialog.open(AgendamentoDialogComponent, {
-      width: '600px',
+      width: '760px',
       maxWidth: '95vw',
+      panelClass: 'modern-dialog-container',
       data: { agendamento, data: new Date(agendamento.dataHoraInicio) }
     });
 

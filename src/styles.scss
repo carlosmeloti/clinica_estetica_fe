@@ -76,3 +76,79 @@ body {
     font-weight: 500;
   }
 }
+
+.modern-dialog-container {
+  .mat-mdc-dialog-container {
+    padding: 0 !important;
+    --mdc-dialog-container-shape: 12px;
+  }
+
+  .mat-mdc-dialog-surface {
+    border-radius: 12px !important;
+    overflow: hidden !important;
+  }
+}
+
+/* Autocomplete Paciente Panel */
+.paciente-autocomplete-panel {
+  max-height: 150px !important;
+  overflow-y: auto !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18) !important;
+  background: #fff !important;
+  padding: 4px 0 !important;
+  z-index: 10000 !important;
+}
+
+.paciente-autocomplete-panel .mat-mdc-option {
+  min-height: 64px !important;
+  height: auto !important;
+  padding: 10px 16px !important;
+  line-height: normal !important;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.paciente-autocomplete-panel .mat-mdc-option:last-child {
+  border-bottom: none;
+}
+
+.paciente-autocomplete-panel .mdc-list-item__primary-text {
+  width: 100%;
+}
+
+.paciente-autocomplete-panel .paciente-option-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.paciente-autocomplete-panel .paciente-nome-result {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.paciente-autocomplete-panel .paciente-info-result {
+  font-size: 12px;
+  color: #777;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.paciente-autocomplete-panel .info-option {
+  font-size: 13px;
+  color: #777;
+  font-style: italic;
+}
+
+.paciente-autocomplete-panel .loading-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
