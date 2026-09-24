@@ -1,4 +1,5 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://localhost:8080/api'
+  /** Relativo: Angular servido pelo Spring no mesmo host/porta. */
+  apiUrl: '/api'
 };
